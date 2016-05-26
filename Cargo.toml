@@ -1,0 +1,6 @@
+[package]
+name = "encsys"
+version = "0.1.0"
+authors = ["mrZalli <misterzalli@gmail.com>"]
+
+[dependencies]
