@@ -1,31 +1,64 @@
-pub type TagName = String;
-pub type TagInfo = Option<String>;
+use std::fmt::Debug;
 
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Tag {
-	name: TagName,
-	info: TagInfo
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum TagData<I>
+	where I: Clone + PartialEq + Eq + Debug
+{
+	Info(I),
+	Exists,
+	Empty
 }
 
-impl Tag {
-	pub fn new(name: &str, info: Option<&str>) -> Tag {
-		Tag{ name: name.to_owned(), info: info.map(str::to_owned) }
+impl<I> TagData<I>
+	where I: Clone + PartialEq + Eq + Debug
+{
+	pub fn get_info(&self) -> Option<&I> {
+		match self {
+			&TagData::Info(ref i) => Some(i),
+			_ => None
+		}
+	}
+}
+
+// A simple tag with name and information.
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub struct Tag<N, I>
+	where	N: Clone + PartialEq + Eq + Debug,
+			I: Clone + PartialEq + Eq + Debug
+{
+	name: N,
+	data: TagData<I>
+}
+
+impl<N, I> Tag<N, I>
+	where	N: Clone + PartialEq + Eq + Debug,
+			I: Clone + PartialEq + Eq + Debug
+{
+	pub fn new_nullary(name: N) -> Tag<N, I> {
+		Tag{ name: name, data: TagData::Exists }
 	}
 
-	pub fn reconstruct(name: &TagName, info: &TagInfo) -> Tag {
-		Tag{ name: name.to_owned(), info: info.clone() }
+	pub fn new_w_data(name: N, data: I) -> Tag<N, I> {
+		Tag{ name: name, data: TagData::Info(data) }
 	}
 
+	pub fn reconstruct(name: &N, data: &TagData<I>) -> Tag<N, I> {
+		Tag{ name: name.clone(), data: data.clone() }
+	}
 
-	pub fn get_name<'a>(&'a self) -> &'a TagName {
+	pub fn get_name<'a>(&'a self) -> &'a N {
 		&self.name
 	}
 
-	pub fn get_info<'a>(&'a self) -> &'a TagInfo {
-		&self.info
+	pub fn get_data<'a>(&'a self) -> Option<&'a I> {
+		self.data.get_info()
 	}
 
-	pub fn to_tuple(self) -> (TagName, TagInfo) {
-		(self.name, self.info)
+	pub fn into_tuple(&self) -> (N, TagData<I>) {
+		(self.name.clone(), self.data.clone())
+	}
+
+	pub fn as_tuple(self) -> (N, TagData<I>) {
+		(self.name, self.data)
 	}
 }
