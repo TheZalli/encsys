@@ -1,18 +1,25 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::hash::Hash;
 use std::fmt::Debug;
 use std::iter::IntoIterator;
 use std::iter::Iterator;
+use std::rc::Rc;
 
 use tag::*;
 use word::*;
 
 /// The word manager stores information about the tags associated with words.
 #[derive(Debug)]
-pub struct Encyclopedia<N, I>
-	where	N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug
+pub struct Encyclopedia<W, N, I>
+	where	W: Clone + PartialEq + Eq + Hash + Debug,
+			N: Clone + PartialEq + Eq + Hash + Debug,
+			I: Clone + PartialEq + Eq + Debug,
 {
+	// an association from word names into their ids/indexes
+	word_name_to_id: HashMap<Rc<W>, usize>,
+	// an association from id's into their word names
+	id_to_word_name: Vec<Rc<W>>,
 	// a hash map from tags to the vectors containing all of the existing tags
 	// to improve memory consumption, optimize the vector values
 	tags: HashMap<N, Vec<TagData<I>>>,
@@ -25,19 +32,45 @@ pub struct Encyclopedia<N, I>
 	word_count: usize,
 }
 
-impl<N, I> Encyclopedia<N, I>
-	where	N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug
+impl<W, N, I> Encyclopedia<W, N, I>
+	where	W: Clone + PartialEq + Eq + Hash + Debug,
+			N: Clone + PartialEq + Eq + Hash + Debug,
+			I: Clone + PartialEq + Eq + Hash + Debug,
 {
 	/// Creates a new empty encyclopedia.
-	pub fn new() -> Encyclopedia<N, I> {
-		Encyclopedia{ tags: HashMap::new(), tag_groups: HashMap::new(), next_id: 0, word_count: 0}
+	pub fn new() -> Encyclopedia<W, N, I> {
+		Encyclopedia {
+			word_name_to_id: HashMap::new(),
+			id_to_word_name: Vec::new(),
+			tags: HashMap::new(),
+			tag_groups: HashMap::new(),
+			next_id: 0,
+			word_count: 0
+		}
 	}
 
 	/// Adds the word with the given tags
-	pub fn add_word(&mut self, word: Word<N, I>) {
-		let current_id = self.next_id;
-		self.next_id += 1;
+	/// If a given word already exists it is replaced
+	pub fn insert_word(&mut self, word: Word<W, N, I>) {
+		let current_id;
+		let name = word.get_name();
+
+		// check if a word with the given name already exists
+		match self.word_name_to_id.entry(name.clone()) {
+			// replace existing word
+			Entry::Occupied(x) => current_id = *x.get(),
+			// add a new word
+			Entry::Vacant(x) => {
+				current_id = self.next_id;
+
+				// add the name into both data structures
+				x.insert(current_id);
+				self.id_to_word_name.push(name);
+
+				self.next_id += 1;
+				self.word_count += 1;
+			}
+		}
 
 		for tag in word.to_tag_vec() {
 			let (name, data) = tag.as_tuple();
@@ -48,7 +81,6 @@ impl<N, I> Encyclopedia<N, I>
 			// add the tag's info
 			vec[current_id] = data;
 		}
-		self.word_count += 1;
 	}
 
 	/// Declares a new tag group with the given name and containing the given tags.
@@ -57,13 +89,20 @@ impl<N, I> Encyclopedia<N, I>
 	}
 
 	/// Gets the word with given id or None if nothing was found or the id was out of bounds.
-	pub fn get_word_by_id(&self, id: usize) -> Option<Word<N, I>> {
+	pub fn get_word_by_id(&self, id: usize) -> Option<Word<W, N, I>> {
 		// check if we are out of range
 		if id >= self.next_id {
 			return None;
 		}
 
-		let mut word = Word::new();
+		let word_name = if let Some(name) = self.id_to_word_name.get(id) {
+			name
+		}
+		else {
+			return None;
+		};
+
+		let mut word = Word::new(word_name.clone());
 
 		// go through known tags
 		for tag_map_elem in self.tags.iter() {
@@ -96,14 +135,13 @@ impl<N, I> Encyclopedia<N, I>
 	/// Removes the word with the given id.
 	/// Note that since removing words is seen as a rare operation, this function doesn't free id slots, except when removing the last element, in which case calling this function is the same as calling `remove_last_word`.
 	pub fn remove_word_by_id(&mut self, id: usize) {
-		if self.is_empty() {
-			return;
-		}
-
 		// if we're removing the last id might as well call the specialized function for that
 		// because it saves up one id
 		if id == self.next_id - 1 {
 			self.remove_last_word();
+		}
+		else if self.is_empty() {
+			return;
 		}
 		else {
 			// go through tags
@@ -149,12 +187,13 @@ impl<N, I> Encyclopedia<N, I>
 	}
 }
 
-impl<'a, N, I> IntoIterator for &'a Encyclopedia<N, I>
+impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
 	where	N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug
+			I: Clone + PartialEq + Eq + Hash + Debug,
+			W: Clone + PartialEq + Eq + Hash + Debug,
 {
-	type Item = <WordIter<'a, N, I> as Iterator>::Item;
-	type IntoIter = WordIter<'a, N, I>;
+	type Item = <WordIter<'a, W, N, I> as Iterator>::Item;
+	type IntoIter = WordIter<'a, W, N, I>;
 
 	fn into_iter(self) -> Self::IntoIter {
 		WordIter{ enc_ref: self, index: 0 }
@@ -162,19 +201,21 @@ impl<'a, N, I> IntoIterator for &'a Encyclopedia<N, I>
 }
 
 /// An iterator that goes through all of the words in an encyclopedia.
-pub struct WordIter<'a, N, I>
-	where	N: 'a + Clone + PartialEq + Eq + Hash + Debug,
-			I: 'a + Clone + PartialEq + Eq + Hash + Debug
+pub struct WordIter<'a, W, N, I>
+	where	W: 'a + Clone + PartialEq + Eq + Hash + Debug,
+			N: 'a + Clone + PartialEq + Eq + Hash + Debug,
+			I: 'a + Clone + PartialEq + Eq + Hash + Debug,
 {
-	enc_ref: &'a Encyclopedia<N, I>,
+	enc_ref: &'a Encyclopedia<W, N, I>,
 	index: usize,
 }
 
-impl<'a, N, I> Iterator for WordIter<'a, N, I>
-	where	N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug
+impl<'a, W, N, I> Iterator for WordIter<'a, W, N, I>
+	where	W: Clone + PartialEq + Eq + Hash + Debug,
+			N: Clone + PartialEq + Eq + Hash + Debug,
+			I: Clone + PartialEq + Eq + Hash + Debug,
 {
-	type Item = Word<N, I>;
+	type Item = Word<W, N, I>;
 
 	fn next(&mut self) -> Option<Self::Item> {
 		// reached the end

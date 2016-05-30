@@ -6,8 +6,8 @@ use word::*;
 fn add_then_check_word() {
 	let mut enc = Encyclopedia::new();
 
-	let word = Word::from_tag_vec(vec![Tag::new_w_data("a", "x"),]);
-	enc.add_word(word.clone());
+	let word = Word::from_tag_vec("word", vec![Tag::new_w_data("a", "x"),]);
+	enc.insert_word(word.clone());
 
 	assert_eq!(Some(word), enc.get_word_by_id(0));
 }
@@ -16,11 +16,11 @@ fn add_then_check_word() {
 fn add2_remove_last() {
 	let mut enc = Encyclopedia::new();
 
-	let word1 = Word::from_tag_vec(vec![Tag::new_w_data("a", "x"),]);
-	let word2 = Word::from_tag_vec(vec![Tag::new_nullary("b"),]);
+	let word1 = Word::from_tag_vec("word1", vec![Tag::new_w_data("a", "x"),]);
+	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 
-	enc.add_word(word1);
-	enc.add_word(word2);
+	enc.insert_word(word1);
+	enc.insert_word(word2);
 	enc.remove_word_by_id(1);
 
 	// since we removed the last id, it's id slot should be freed.
@@ -31,11 +31,11 @@ fn add2_remove_last() {
 fn add2_remove_first() {
 	let mut enc = Encyclopedia::new();
 
-	let word1 = Word::from_tag_vec(vec![Tag::new_w_data("a", "x"),]);
-	let word2 = Word::from_tag_vec(vec![Tag::new_nullary("b"),]);
+	let word1 = Word::from_tag_vec("word1", vec![Tag::new_w_data("a", "x"),]);
+	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 
-	enc.add_word(word1);
-	enc.add_word(word2.clone());
+	enc.insert_word(word1);
+	enc.insert_word(word2.clone());
 
 	enc.remove_word_by_id(0);
 
@@ -49,13 +49,13 @@ fn add2_remove_first() {
 fn iterate_over_3() {
 	let mut enc = Encyclopedia::new();
 
-	let word1 = Word::from_tag_vec(vec![Tag::new_w_data("a", "x"),]);
-	let word2 = Word::from_tag_vec(vec![Tag::new_nullary("b"),]);
-	let word3 = Word::from_tag_vec(vec![Tag::new_w_data("c", "y"),]);
+	let word1 = Word::from_tag_vec("word1", vec![Tag::new_w_data("a", "x"),]);
+	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
+	let word3 = Word::from_tag_vec("word3", vec![Tag::new_w_data("c", "y"),]);
 
-	enc.add_word(word1.clone());
-	enc.add_word(word2.clone());
-	enc.add_word(word3.clone());
+	enc.insert_word(word1.clone());
+	enc.insert_word(word2.clone());
+	enc.insert_word(word3.clone());
 
 	let mut i = enc.into_iter();
 
@@ -67,12 +67,12 @@ fn iterate_over_3() {
 
 #[test]
 fn iterate_over_n() {
-	let mut enc = Encyclopedia::<usize, Option<usize>>::new();
+	let mut enc = Encyclopedia::<usize, usize, ()>::new();
 
 	let words = 100;
 
 	for w in 0..words {
-		enc.add_word(Word::from_tag_vec(vec![Tag::new_nullary(w)]));
+		enc.insert_word(Word::from_tag_vec(w, vec![Tag::new_nullary(w)]));
 	}
 
 	assert_eq!(words, enc.get_word_count());
@@ -95,10 +95,10 @@ fn test_tag_group() {
 	enc.add_tag_group("group", vec![tag1.clone(), tag2.clone()]);
 
 	// let's create our word consisting of tag 3 and our group
-	let word = Word::from_tag_vec(vec![tag3.clone(), Tag::new_nullary("group")]);
+	let word = Word::from_tag_vec("word", vec![tag3.clone(), Tag::new_nullary("group")]);
 
 	// add the word
-	enc.add_word(word);
+	enc.insert_word(word);
 
 	// the expected tag output
 	let tags = vec![tag1, tag2, tag3];

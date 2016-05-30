@@ -2,28 +2,38 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::fmt::Debug;
 use std::iter::{IntoIterator, Extend};
+use std::rc::Rc;
 
 use tag::*;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Word<N, I>
+pub struct Word<W, N, I>
 	where	N: PartialEq + Eq + Clone + Debug + Hash,
 			I: PartialEq + Eq + Clone + Debug,
 {
+	name: Rc<W>,
 	tags: HashMap<N, TagData<I>>
 }
 
-impl<N, I> Word<N, I>
+impl<W, N, I> Word<W, N, I>
 	where	N: PartialEq + Eq + Clone + Debug + Hash,
 			I: PartialEq + Eq + Clone + Debug,
 {
 	/// Creates a new empty word
-	pub fn new() -> Word<N, I> {
-		Word{ tags: HashMap::new() }
+	pub fn new<T>(name: T) -> Word<W, N, I>
+		where T: Into<Rc<W>> + PartialEq + Eq  + Clone + Debug
+	{
+		Word{ name: name.into(), tags: HashMap::new() }
 	}
 
-	pub fn from_tag_vec(vec: Vec<Tag<N, I>>) -> Word<N, I> {
-		Word{ tags: vec.into_iter().map(&Tag::as_tuple).collect() }
+	pub fn from_tag_vec<T>(name: T, vec: Vec<Tag<N, I>>) -> Word<W, N, I>
+		where T: Into<Rc<W>> + PartialEq + Eq  + Clone + Debug
+	{
+		Word{ name: name.into(), tags: vec.into_iter().map(&Tag::as_tuple).collect() }
+	}
+
+	pub fn get_name(&self) -> Rc<W> {
+		self.name.clone()
 	}
 
 	pub fn to_tag_vec(self) -> Vec<Tag<N, I>> {
@@ -52,7 +62,7 @@ impl<N, I> Word<N, I>
 	}
 }
 
-impl<'a, N, I> Extend<&'a Tag<N, I>> for Word<N, I>
+impl<'a, W, N, I> Extend<&'a Tag<N, I>> for Word<W, N, I>
 	where	N: PartialEq + Eq + Clone + Debug + Hash,
 			I: PartialEq + Eq + Clone + Debug,
 {
