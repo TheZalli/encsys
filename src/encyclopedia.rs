@@ -35,7 +35,7 @@ pub struct Encyclopedia<W, N, I>
 impl<W, N, I> Encyclopedia<W, N, I>
 	where	W: Clone + PartialEq + Eq + Hash + Debug,
 			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug,
+			I: Clone + PartialEq + Eq + Debug,
 {
 	/// Creates a new empty encyclopedia.
 	pub fn new() -> Encyclopedia<W, N, I> {
@@ -73,13 +73,12 @@ impl<W, N, I> Encyclopedia<W, N, I>
 		}
 
 		for tag in word.to_tag_vec() {
-			let (name, data) = tag.as_tuple();
 			// get the tag's vector, if not found create it
-			let vec = self.tags.entry(name).or_insert(Vec::new());
+			let vec = self.tags.entry(tag.name).or_insert(Vec::new());
 			// resize the vector to fit
 			vec.resize(self.next_id, TagData::Empty);
 			// add the tag's info
-			vec[current_id] = data;
+			vec[current_id] = tag.data;
 		}
 	}
 
@@ -188,9 +187,9 @@ impl<W, N, I> Encyclopedia<W, N, I>
 }
 
 impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
-	where	N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug,
-			W: Clone + PartialEq + Eq + Hash + Debug,
+	where	W: Clone + PartialEq + Eq + Hash + Debug,
+			N: Clone + PartialEq + Eq + Hash + Debug,
+			I: Clone + PartialEq + Eq + Debug,
 {
 	type Item = <WordIter<'a, W, N, I> as Iterator>::Item;
 	type IntoIter = WordIter<'a, W, N, I>;
@@ -204,7 +203,7 @@ impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
 pub struct WordIter<'a, W, N, I>
 	where	W: 'a + Clone + PartialEq + Eq + Hash + Debug,
 			N: 'a + Clone + PartialEq + Eq + Hash + Debug,
-			I: 'a + Clone + PartialEq + Eq + Hash + Debug,
+			I: 'a + Clone + PartialEq + Eq + Debug,
 {
 	enc_ref: &'a Encyclopedia<W, N, I>,
 	index: usize,
@@ -213,7 +212,7 @@ pub struct WordIter<'a, W, N, I>
 impl<'a, W, N, I> Iterator for WordIter<'a, W, N, I>
 	where	W: Clone + PartialEq + Eq + Hash + Debug,
 			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Hash + Debug,
+			I: Clone + PartialEq + Eq + Debug,
 {
 	type Item = Word<W, N, I>;
 

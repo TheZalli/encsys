@@ -18,6 +18,10 @@ impl<I> TagData<I>
 			_ => None
 		}
 	}
+
+	pub fn is_empty(&self) -> bool {
+		*self == TagData::Empty
+	}
 }
 
 // A simple tag with name and information.
@@ -26,8 +30,8 @@ pub struct Tag<N, I>
 	where	N: Clone + PartialEq + Eq + Debug,
 			I: Clone + PartialEq + Eq + Debug
 {
-	name: N,
-	data: TagData<I>
+	pub name: N,
+	pub data: TagData<I>
 }
 
 impl<N, I> Tag<N, I>
@@ -45,7 +49,7 @@ impl<N, I> Tag<N, I>
 	pub fn reconstruct(name: &N, data: &TagData<I>) -> Tag<N, I> {
 		Tag{ name: name.clone(), data: data.clone() }
 	}
-
+	/*
 	pub fn get_name<'a>(&'a self) -> &'a N {
 		&self.name
 	}
@@ -60,5 +64,5 @@ impl<N, I> Tag<N, I>
 
 	pub fn as_tuple(self) -> (N, TagData<I>) {
 		(self.name, self.data)
-	}
+	}*/
 }

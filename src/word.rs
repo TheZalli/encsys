@@ -29,7 +29,10 @@ impl<W, N, I> Word<W, N, I>
 	pub fn from_tag_vec<T>(name: T, vec: Vec<Tag<N, I>>) -> Word<W, N, I>
 		where T: Into<Rc<W>> + PartialEq + Eq  + Clone + Debug
 	{
-		Word{ name: name.into(), tags: vec.into_iter().map(&Tag::as_tuple).collect() }
+		Word{
+			name: name.into(),
+			tags: vec.into_iter().map(|t: Tag<N, I>| (t.name, t.data)).collect(),
+		}
 	}
 
 	pub fn get_name(&self) -> Rc<W> {
@@ -41,8 +44,7 @@ impl<W, N, I> Word<W, N, I>
 	}
 
 	pub fn add_tag(&mut self, t: Tag<N, I>) {
-		let (name, info) = t.as_tuple();
-		self.tags.insert(name, info);
+		self.tags.insert(t.name, t.data);
 	}
 
 	pub fn get_tag_data(&self, name: N) -> Option<&TagData<I>> {
@@ -67,6 +69,6 @@ impl<'a, W, N, I> Extend<&'a Tag<N, I>> for Word<W, N, I>
 			I: PartialEq + Eq + Clone + Debug,
 {
 	fn extend<T>(&mut self, iter: T) where T: IntoIterator<Item=&'a Tag<N, I>> {
-		self.tags.extend(iter.into_iter().map(|t: &Tag<N, I>| t.into_tuple() ))
+		self.tags.extend(iter.into_iter().map(|t: &Tag<N, I>| (t.name.clone(), t.data.clone()) ))
 	}
 }
