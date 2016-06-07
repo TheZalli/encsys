@@ -21,7 +21,7 @@ pub struct Encyclopedia<W, N, I>
 	word_vec: Vec<Option<Rc<W>>>,
 	// a hash map from tags to the vectors containing all of the existing tags
 	// to improve memory consumption, optimize the vector values
-	tags: HashMap<N, Vec<TagData<I>>>,
+	tags: HashMap<Rc<N>, Vec<TagData<I>>>,
 	// a group of tags using a single tag's name, used to avoid copying common tag combinations
 	tag_groups: HashMap<N, Vec<Tag<N, I>>>,
 	// the id of the next word that is added
@@ -78,7 +78,7 @@ impl<W, N, I> Encyclopedia<W, N, I>
 
 		for tag in word.to_tag_vec() {
 			// get the tag's vector, if not found create it
-			let vec = self.tags.entry(tag.name).or_insert(Vec::new());
+			let vec = self.tags.entry(tag.get_name()).or_insert(Vec::new());
 			// resize the vector to fit
 			vec.resize(self.next_id, TagData::Empty);
 			// add the tag's info
@@ -118,8 +118,10 @@ impl<W, N, I> Encyclopedia<W, N, I>
 				match tag_map_elem.1.get(id) {
 					// nope didn't find
 					Some(&TagData::Empty) | None => {},
-					// yep we found
-					Some(ref tag_data) => word.add_tag(Tag::reconstruct(tag_map_elem.0, tag_data))
+					// yep we found it
+					Some(ref tag_data) => word.add_tag(
+						Tag::reconstruct(tag_map_elem.0.clone(), tag_data)
+					)
 				}
 			}
 
@@ -199,19 +201,23 @@ impl<W, N, I> Encyclopedia<W, N, I>
 		self.next_id -= 1;
 	}
 
-	/// Returns a word with the given name or None if no such word was found.
-	pub fn get_word_by_name(&self, name: Rc<W>) -> Option<Word<W, N, I>> {
+	/// Returns a word with the given name or `None` if no such word was found.
+	pub fn get_word_by_name<T>(&self, name: T) -> Option<Word<W, N, I>>
+		where T: Into<Rc<W>>,
+	{
 		// OPTIMIZATION: use the information that the name exists and what it is
-		match self.word_map.get(&name) {
+		match self.word_map.get(&name.into()) {
 			Some(&id) => self.get_word_by_id(id),
 			None => None,
 		}
 	}
 
 	/// Removes the word with the given name.
-	pub fn remove_word_by_name(&mut self, name: Rc<W>) {
+	pub fn remove_word_by_name<T>(&mut self, name: T)
+		where T: Into<Rc<W>>,
+	{
 		// OPTIMIZATION: use the information that the name exists and what it is
-		if let Some(&id) = self.word_map.get(&name) {
+		if let Some(&id) = self.word_map.get(&name.into()) {
 			self.remove_word_by_id(id)
 		}
 	}

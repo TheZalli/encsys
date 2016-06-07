@@ -6,7 +6,7 @@ use word::*;
 fn add_then_check_word() {
 	let mut enc = Encyclopedia::new();
 
-	let word = Word::from_tag_vec("word", vec![Tag::new_w_data("a", "x"),]);
+	let word = Word::from_tag_vec("word", vec![Tag::new_with_info("a", "x"),]);
 	enc.insert_word(word.clone());
 
 	assert_eq!(Some(word), enc.get_word_by_id(0));
@@ -16,7 +16,7 @@ fn add_then_check_word() {
 fn add2_remove_last() {
 	let mut enc = Encyclopedia::new();
 
-	let word1 = Word::from_tag_vec("word1", vec![Tag::new_w_data("a", "x"),]);
+	let word1 = Word::from_tag_vec("word1", vec![Tag::new_with_info("a", "x"),]);
 	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 
 	enc.insert_word(word1);
@@ -31,7 +31,7 @@ fn add2_remove_last() {
 fn add2_remove_first() {
 	let mut enc = Encyclopedia::new();
 
-	let word1 = Word::from_tag_vec("word1", vec![Tag::new_w_data("a", "x"),]);
+	let word1 = Word::from_tag_vec("word1", vec![Tag::new_with_info("a", "x"),]);
 	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 
 	enc.insert_word(word1);
@@ -49,9 +49,9 @@ fn add2_remove_first() {
 fn iterate_over_3() {
 	let mut enc = Encyclopedia::new();
 
-	let word1 = Word::from_tag_vec("word1", vec![Tag::new_w_data("a", "x"),]);
+	let word1 = Word::from_tag_vec("word1", vec![Tag::new_with_info("a", "x"),]);
 	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
-	let word3 = Word::from_tag_vec("word3", vec![Tag::new_w_data("c", "y"),]);
+	let word3 = Word::from_tag_vec("word3", vec![Tag::new_with_info("c", "y"),]);
 
 	enc.insert_word(word1.clone());
 	enc.insert_word(word2.clone());
@@ -87,9 +87,9 @@ fn iterate_over_n() {
 fn test_tag_group() {
 	let mut enc = Encyclopedia::new();
 
-	let tag1 = Tag::new_w_data("a", "x");
+	let tag1 = Tag::new_with_info("a", "x");
 	let tag2 = Tag::new_nullary("b");
-	let tag3 = Tag::new_w_data("c", "y");
+	let tag3 = Tag::new_with_info("c", "y");
 
 	// let's add our group of tags 1 and 2
 	enc.add_tag_group("group", vec![tag1.clone(), tag2.clone()]);
@@ -108,11 +108,39 @@ fn test_tag_group() {
 	let mut found = 0;
 	for w in enc.iter() {
 		for i in tags.iter() {
-			if w.has_tag(i.get_name()) {
-				assert_eq!(w.get_tag_info(i.get_name()), i.get_data());
+			if w.has_tag(i.get_name().as_ref()) {
+				assert_eq!(w.get_tag_info(i.get_name().as_ref()), i.get_data());
 				found += 1;
 			}
 		}
 	}
 	assert_eq!(found, 3);
+}
+
+#[test]
+fn test_name_get() {
+	let mut enc = Encyclopedia::<&str, usize, usize>::new();
+	let word1 = Word::new("word1");
+	let word2 = Word::new("word2");
+	let word3 = Word::new("word3");
+
+	enc.insert_word(word1.clone());
+	enc.insert_word(word2.clone());
+	enc.insert_word(word3.clone());
+
+	assert_eq!(enc.get_word_count(), 3);
+
+	assert_eq!(Some(word1.clone()), enc.get_word_by_name("word1"));
+	assert_eq!(Some(word2.clone()), enc.get_word_by_name("word2"));
+	assert_eq!(Some(word3.clone()), enc.get_word_by_name("word3"));
+	assert_eq!(None, enc.get_word_by_name("none"));
+	assert!(Some(word1.clone()) != enc.get_word_by_name("word3"));
+
+	enc.remove_word_by_name("word2");
+
+	assert_eq!(enc.get_word_count(), 2);
+	assert_eq!(Some(word1), enc.get_word_by_name("word1"));
+	assert_eq!(None, enc.get_word_by_name("word2"));
+	assert_eq!(Some(word3), enc.get_word_by_name("word3"));
+
 }

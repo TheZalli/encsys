@@ -20,12 +20,12 @@ impl<C, D> Entity<C, D>
 	where	C: PartialEq + Eq + Clone + Debug + Hash,
 			D: Clone + Debug,
 {
-	/// Creates a new entity that is derived from a word with the given id.
+	/// Creates a new entity that is associated with a word with the given id.
 	pub fn new(word_id: usize) -> Entity<C, D> {
 		Entity{ assoc_word_id: word_id, comps: HashMap::new() }
 	}
 
-	/// Returns the id of the word where this entity is derived from.
+	/// Returns the id of the word id of the associated word.
 	pub fn get_word_id(&self) -> usize {
 		self.assoc_word_id
 	}
@@ -35,12 +35,12 @@ impl<C, D> Entity<C, D>
 		self.comps.insert(c.name, c.data);
 	}
 
-	/// Gets the data of the component with the given name or returns None if no such component was found.
+	/// Gets the data of the component with the given name or returns `None` if no such component was found.
 	pub fn get_comp_data(&self, comp_name: Rc<C>) -> Option<Rc<D>> {
 		self.comps.get(&comp_name).map(&Rc::clone)
 	}
 
-	/// Returns true if this entity has an entity with the given name
+	/// Returns true if this entity has an entity with the given name.
 	pub fn has_comp(&self, comp_name: Rc<C>) -> bool {
 		self.comps.contains_key(&comp_name)
 	}
@@ -55,6 +55,7 @@ impl<C, D> Entity<C, D>
 		self.comps.is_empty()
 	}
 
+	/// Returns an iterator over the entitys components.
 	pub fn iter(&self) -> EntCompIter<C, D> {
 		EntCompIter{ comp_iter: self.comps.iter() }
 	}

@@ -1,11 +1,13 @@
 use std::rc::Rc;
 
+/// A component with a name and data.
 pub struct Comp<C, D> {
 	pub name: Rc<C>,
 	pub data: Rc<D>,
 }
 
 impl<C, D> Comp<C, D> {
+	/// Creates a new component.
 	pub fn new<T, U>(name: T, data: U) -> Comp<C, D>
 		where	T: Into<Rc<C>>,
 				U: Into<Rc<D>>,
@@ -17,8 +19,8 @@ impl<C, D> Comp<C, D> {
 		self.name.clone()
 	}
 
-	pub fn get_data(&self) -> &D {
-		&self.data
+	pub fn get_data(&self) -> Rc<D> {
+		self.data.clone()
 	}*/
 }
 

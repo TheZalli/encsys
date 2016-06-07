@@ -7,7 +7,7 @@ use std::rc::Rc;
 use ecs::entity::Entity;
 use ecs::component::Comp;
 
-/// An entity manager creates and manages entities
+/// An entity manager creates and manages entities.
 #[derive(Debug)]
 pub struct EntMan<C, D>
 	where	C: Clone + PartialEq + Eq + Hash + Debug,
@@ -26,10 +26,12 @@ impl<C, D> EntMan<C, D>
 	where	C: Clone + PartialEq + Eq + Hash + Debug,
 			D: Clone + PartialEq + Eq + Debug,
 {
+	/// Creates an empty entity manager.
 	pub fn new() -> EntMan<C, D> {
 		EntMan { comps: HashMap::new(), assoc_word_ids: Vec::new(), next_id: 0, count: 0}
 	}
 
+	/// Adds the given entity to the entity manager.
 	pub fn add_entity(&mut self, e: Entity<C, D>) {
 		let current_id = self.next_id;
 		self.next_id += 1;
@@ -44,6 +46,7 @@ impl<C, D> EntMan<C, D>
 		}
 	}
 
+	/// Returns the entity associated with the given id.
 	pub fn get_ent_by_id(&self, id: usize) -> Option<Entity<C, D>> {
 		// check if the id is out of bounds
 		if id >= self.next_id {
