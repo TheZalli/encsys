@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::hash::Hash;
 use std::fmt::Debug;
-use std::iter::IntoIterator;
 use std::iter::Iterator;
 use std::rc::Rc;
 
@@ -17,9 +16,9 @@ pub struct Encyclopedia<W, N, I>
 			I: Clone + PartialEq + Eq + Debug,
 {
 	// an association from word names into their ids/indexes
-	word_name_to_id: HashMap<Rc<W>, usize>,
+	word_map: HashMap<Rc<W>, usize>,
 	// an association from id's into their word names
-	id_to_word_name: Vec<Rc<W>>,
+	word_vec: Vec<Option<Rc<W>>>,
 	// a hash map from tags to the vectors containing all of the existing tags
 	// to improve memory consumption, optimize the vector values
 	tags: HashMap<N, Vec<TagData<I>>>,
@@ -40,13 +39,18 @@ impl<W, N, I> Encyclopedia<W, N, I>
 	/// Creates a new empty encyclopedia.
 	pub fn new() -> Encyclopedia<W, N, I> {
 		Encyclopedia {
-			word_name_to_id: HashMap::new(),
-			id_to_word_name: Vec::new(),
+			word_map: HashMap::new(),
+			word_vec: Vec::new(),
 			tags: HashMap::new(),
 			tag_groups: HashMap::new(),
 			next_id: 0,
 			word_count: 0
 		}
+	}
+
+	/// Declares a new tag group with the given name and containing the given tags.
+	pub fn add_tag_group(&mut self, group_name: N, tags: Vec<Tag<N, I>>) {
+		self.tag_groups.insert(group_name, tags);
 	}
 
 	/// Adds the word with the given tags
@@ -56,7 +60,7 @@ impl<W, N, I> Encyclopedia<W, N, I>
 		let name = word.get_name();
 
 		// check if a word with the given name already exists
-		match self.word_name_to_id.entry(name.clone()) {
+		match self.word_map.entry(name.clone()) {
 			// replace existing word
 			Entry::Occupied(x) => current_id = *x.get(),
 			// add a new word
@@ -65,7 +69,7 @@ impl<W, N, I> Encyclopedia<W, N, I>
 
 				// add the name into both data structures
 				x.insert(current_id);
-				self.id_to_word_name.push(name);
+				self.word_vec.push(Some(name));
 
 				self.next_id += 1;
 				self.word_count += 1;
@@ -82,25 +86,23 @@ impl<W, N, I> Encyclopedia<W, N, I>
 		}
 	}
 
-	/// Declares a new tag group with the given name and containing the given tags.
-	pub fn add_tag_group(&mut self, group_name: N, tags: Vec<Tag<N, I>>) {
-		self.tag_groups.insert(group_name, tags);
-	}
-
 	/// Gets the word with given id or None if nothing was found or the id was out of bounds.
 	pub fn get_word_by_id(&self, id: usize) -> Option<Word<W, N, I>> {
-		// check if we are out of range
-		if id >= self.next_id {
-			return None;
-		}
+		// find the name of the word
+		let word_name =
+			match self.word_vec.get(id) {
+				// found the name
+				Some(&Some(ref name)) => name,
+				// didn't found the name
+				Some(&None) => return None,
+				// we were out of range
+				None => {
+					assert!(id >= self.next_id);
+					return None;
+				}
+			};
 
-		let word_name = if let Some(name) = self.id_to_word_name.get(id) {
-			name
-		}
-		else {
-			return None;
-		};
-
+		// the returned variable
 		let mut word = Word::new(word_name.clone());
 
 		// go through known tags
@@ -123,33 +125,47 @@ impl<W, N, I> Encyclopedia<W, N, I>
 
 		}
 
-		if word.is_empty() {
-			None
-		}
-		else {
-			Some(word)
-		}
+		// since we have the name field checked already we know there is a word
+		// therefore we can return a word with just a name and without any tags
+		Some(word)
 	}
 
 	/// Removes the word with the given id.
 	/// Note that since removing words is seen as a rare operation, this function doesn't free id slots, except when removing the last element, in which case calling this function is the same as calling `remove_last_word`.
 	pub fn remove_word_by_id(&mut self, id: usize) {
 		// if we're removing the last id might as well call the specialized function for that
-		// because it saves up one id
+		// because it saves up one id slot
 		if id == self.next_id - 1 {
-			self.remove_last_word();
+			return self.remove_last_word();
 		}
 		else if self.is_empty() {
 			return;
 		}
-		else {
-			// go through tags
-			for tag_map_elem in self.tags.iter_mut() {
-				// clear the word's tag
-				tag_map_elem.1.get_mut(id).map(|x| *x = TagData::Empty);
+
+		// check if this word exists by looking at it's name
+		match self.word_vec.get(id) {
+			Some(&Some(ref name)) => {
+				// remove it from the map
+				let rem_opt = self.word_map.remove(name);
+				assert_eq!(rem_opt, Some(id));
+			},
+			// the word doesn't exist
+			Some(&None) => return,
+			// the index was out of range
+			None => {
+				assert!(id >= self.next_id);
+				return;
 			}
-			self.word_count -= 1;
 		}
+		// remove the name from the vec
+		self.word_vec[id] = None;
+
+		// go through tags
+		for tag_map_elem in self.tags.iter_mut() {
+			// clear the word's tag
+			tag_map_elem.1.get_mut(id).map(|x| *x = TagData::Empty);
+		}
+		self.word_count -= 1;
 	}
 
 	/// Removes the word with the last id and frees it's id slot.
@@ -157,6 +173,18 @@ impl<W, N, I> Encyclopedia<W, N, I>
 		if self.is_empty() {
 			return;
 		}
+
+		// remove the name information
+		// since we know self is not empty this is a safe unwrap.
+		if let &Some(ref name) = &self.word_vec.pop().unwrap() {
+			// remove it from the map also if the name was found
+			self.word_map.remove(name);
+			// we know we are removing a word's tags and not just popping empty in the next loop.
+			self.word_count -= 1;
+		}
+
+		// even if the name doesn't exist and therefore neither should the tags,
+		// we have to pop out the extra size.
 
 		// go through tags
 		for tag_map_elem in self.tags.iter_mut() {
@@ -166,8 +194,26 @@ impl<W, N, I> Encyclopedia<W, N, I>
 				tag_map_elem.1.pop();
 			}
 		}
+
+		// free the id slot
 		self.next_id -= 1;
-		self.word_count -= 1
+	}
+
+	/// Returns a word with the given name or None if no such word was found.
+	pub fn get_word_by_name(&self, name: Rc<W>) -> Option<Word<W, N, I>> {
+		// OPTIMIZATION: use the information that the name exists and what it is
+		match self.word_map.get(&name) {
+			Some(&id) => self.get_word_by_id(id),
+			None => None,
+		}
+	}
+
+	/// Removes the word with the given name.
+	pub fn remove_word_by_name(&mut self, name: Rc<W>) {
+		// OPTIMIZATION: use the information that the name exists and what it is
+		if let Some(&id) = self.word_map.get(&name) {
+			self.remove_word_by_id(id)
+		}
 	}
 
 	/// Returns the one after the last existing id.
@@ -184,9 +230,13 @@ impl<W, N, I> Encyclopedia<W, N, I>
 	pub fn is_empty(&self) -> bool {
 		self.word_count == 0
 	}
+
+	pub fn iter(&self) -> WordIter<W, N, I> {
+		WordIter{ enc_ref: self, index: 0 }
+	}
 }
 
-impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
+/*impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
 	where	W: Clone + PartialEq + Eq + Hash + Debug,
 			N: Clone + PartialEq + Eq + Hash + Debug,
 			I: Clone + PartialEq + Eq + Debug,
@@ -197,7 +247,7 @@ impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
 	fn into_iter(self) -> Self::IntoIter {
 		WordIter{ enc_ref: self, index: 0 }
 	}
-}
+}*/
 
 /// An iterator that goes through all of the words in an encyclopedia.
 pub struct WordIter<'a, W, N, I>

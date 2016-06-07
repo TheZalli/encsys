@@ -49,7 +49,7 @@ impl<N, I> Tag<N, I>
 	pub fn reconstruct(name: &N, data: &TagData<I>) -> Tag<N, I> {
 		Tag{ name: name.clone(), data: data.clone() }
 	}
-	/*
+
 	pub fn get_name<'a>(&'a self) -> &'a N {
 		&self.name
 	}
@@ -57,7 +57,7 @@ impl<N, I> Tag<N, I>
 	pub fn get_data<'a>(&'a self) -> Option<&'a I> {
 		self.data.get_info()
 	}
-
+	/*
 	pub fn into_tuple(&self) -> (N, TagData<I>) {
 		(self.name.clone(), self.data.clone())
 	}

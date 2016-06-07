@@ -57,7 +57,7 @@ fn iterate_over_3() {
 	enc.insert_word(word2.clone());
 	enc.insert_word(word3.clone());
 
-	let mut i = enc.into_iter();
+	let mut i = enc.iter();
 
 	assert_eq!(Some(word1), i.next());
 	assert_eq!(Some(word2), i.next());
@@ -77,7 +77,7 @@ fn iterate_over_n() {
 
 	assert_eq!(words, enc.get_word_count());
 
-	for (w, word_tags) in enc.into_iter().map(&Word::to_tag_vec).enumerate() {
+	for (w, word_tags) in enc.iter().map(&Word::to_tag_vec).enumerate() {
 		assert_eq!(word_tags.len(), 1);
 		assert_eq!(word_tags[0], Tag::new_nullary(w));
 	}
@@ -106,7 +106,7 @@ fn test_tag_group() {
 	// check if we can found all three tags
 	// the order of the vector is not preserved
 	let mut found = 0;
-	for w in enc.into_iter() {
+	for w in enc.iter() {
 		for i in tags.iter() {
 			if w.has_tag(i.get_name()) {
 				assert_eq!(w.get_tag_info(i.get_name()), i.get_data());
