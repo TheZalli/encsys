@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use ecs::component::Comp;
 
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Debug)]
 /// An entity derived from a word containing components that describe it.
 pub struct Entity<C, D>
 	where	C: PartialEq + Eq + Clone + Debug + Hash,

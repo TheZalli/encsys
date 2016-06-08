@@ -5,8 +5,8 @@ use std::fmt::Debug;
 use std::iter::Iterator;
 use std::rc::Rc;
 
-use tag::*;
-use word::*;
+use enc::tag::*;
+use enc::word::*;
 
 /// The word manager stores information about the tags associated with words.
 #[derive(Debug)]
@@ -53,9 +53,10 @@ impl<W, N, I> Encyclopedia<W, N, I>
 		self.tag_groups.insert(group_name, tags);
 	}
 
-	/// Adds the word with the given tags
-	/// If a given word already exists it is replaced
-	pub fn insert_word(&mut self, word: Word<W, N, I>) {
+	/// Adds the word with the given tags.
+	/// If a given word already exists it is replaced.
+	/// Returns the id given to the word.
+	pub fn insert_word(&mut self, word: Word<W, N, I>) -> usize {
 		let current_id;
 		let name = word.get_name();
 
@@ -84,6 +85,8 @@ impl<W, N, I> Encyclopedia<W, N, I>
 			// add the tag's info
 			vec[current_id] = tag.data;
 		}
+
+		return current_id;
 	}
 
 	/// Gets the word with given id or None if nothing was found or the id was out of bounds.
@@ -151,13 +154,8 @@ impl<W, N, I> Encyclopedia<W, N, I>
 				let rem_opt = self.word_map.remove(name);
 				assert_eq!(rem_opt, Some(id));
 			},
-			// the word doesn't exist
-			Some(&None) => return,
-			// the index was out of range
-			None => {
-				assert!(id >= self.next_id);
-				return;
-			}
+			// the word doesn't exist or the index was out of range
+			_ => return,
 		}
 		// remove the name from the vec
 		self.word_vec[id] = None;

@@ -1,6 +1,4 @@
-use encyclopedia::Encyclopedia;
-use tag::*;
-use word::*;
+use enc::*;
 
 #[test]
 fn add_then_check_word() {

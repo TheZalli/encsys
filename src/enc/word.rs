@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::iter::{IntoIterator, Extend};
 use std::rc::Rc;
 
-use tag::*;
+use enc::tag::*;
 
 /// A word that has a name and associated tags.
 #[derive(PartialEq, Eq, Clone, Debug)]
