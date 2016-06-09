@@ -1,3 +1,4 @@
+use EncSysContainer;
 use enc::*;
 
 #[test]
@@ -5,9 +6,9 @@ fn add_then_check_word() {
 	let mut enc = Encyclopedia::new();
 
 	let word = Word::from_tag_vec("word", vec![Tag::new_with_info("a", "x"),]);
-	enc.insert_word(word.clone());
+	enc.add(word.clone());
 
-	assert_eq!(Some(word), enc.get_word_by_id(0));
+	assert_eq!(Some(word), enc.get_by_id(0));
 }
 
 #[test]
@@ -17,12 +18,11 @@ fn add2_remove_last() {
 	let word1 = Word::from_tag_vec("word1", vec![Tag::new_with_info("a", "x"),]);
 	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 
-	enc.insert_word(word1);
-	enc.insert_word(word2);
-	enc.remove_word_by_id(1);
+	enc.add(word1);
+	enc.add(word2);
+	enc.remove_by_id(1);
 
-	// since we removed the last id, it's id slot should be freed.
-	assert_eq!(enc.get_end_id(), 1);
+	assert_eq!(enc.get_count(), 1);
 }
 
 #[test]
@@ -32,15 +32,15 @@ fn add2_remove_first() {
 	let word1 = Word::from_tag_vec("word1", vec![Tag::new_with_info("a", "x"),]);
 	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 
-	enc.insert_word(word1);
-	enc.insert_word(word2.clone());
+	enc.add(word1);
+	enc.add(word2.clone());
 
-	enc.remove_word_by_id(0);
+	enc.remove_by_id(0);
 
-	assert_eq!(enc.get_word_count(), 1);
+	assert_eq!(enc.get_count(), 1);
 	// the behaviour of vacant id slots is not required to stay the same
 	//assert_eq!(enc.get_end_id(), 2);
-	assert_eq!(Some(word2), enc.get_word_by_id(1));
+	assert_eq!(Some(word2), enc.get_by_id(1));
 }
 
 #[test]
@@ -51,9 +51,9 @@ fn iterate_over_3() {
 	let word2 = Word::from_tag_vec("word2", vec![Tag::new_nullary("b"),]);
 	let word3 = Word::from_tag_vec("word3", vec![Tag::new_with_info("c", "y"),]);
 
-	enc.insert_word(word1.clone());
-	enc.insert_word(word2.clone());
-	enc.insert_word(word3.clone());
+	enc.add(word1.clone());
+	enc.add(word2.clone());
+	enc.add(word3.clone());
 
 	let mut i = enc.iter();
 
@@ -70,10 +70,10 @@ fn iterate_over_n() {
 	let words = 100;
 
 	for w in 0..words {
-		enc.insert_word(Word::from_tag_vec(w, vec![Tag::new_nullary(w)]));
+		enc.add(Word::from_tag_vec(w, vec![Tag::new_nullary(w)]));
 	}
 
-	assert_eq!(words, enc.get_word_count());
+	assert_eq!(words, enc.get_count());
 
 	for (w, word_tags) in enc.iter().map(&Word::to_tag_vec).enumerate() {
 		assert_eq!(word_tags.len(), 1);
@@ -96,7 +96,7 @@ fn test_tag_group() {
 	let word = Word::from_tag_vec("word", vec![tag3.clone(), Tag::new_nullary("group")]);
 
 	// add the word
-	enc.insert_word(word);
+	enc.add(word);
 
 	// the expected tag output
 	let tags = vec![tag1, tag2, tag3];
@@ -122,23 +122,22 @@ fn test_name_get() {
 	let word2 = Word::new("word2");
 	let word3 = Word::new("word3");
 
-	enc.insert_word(word1.clone());
-	enc.insert_word(word2.clone());
-	enc.insert_word(word3.clone());
+	enc.add(word1.clone());
+	enc.add(word2.clone());
+	enc.add(word3.clone());
 
-	assert_eq!(enc.get_word_count(), 3);
+	assert_eq!(enc.get_count(), 3);
 
-	assert_eq!(Some(word1.clone()), enc.get_word_by_name("word1"));
-	assert_eq!(Some(word2.clone()), enc.get_word_by_name("word2"));
-	assert_eq!(Some(word3.clone()), enc.get_word_by_name("word3"));
-	assert_eq!(None, enc.get_word_by_name("none"));
-	assert!(Some(word1.clone()) != enc.get_word_by_name("word3"));
+	assert_eq!(Some(word1.clone()), enc.get_by_name("word1"));
+	assert_eq!(Some(word2.clone()), enc.get_by_name("word2"));
+	assert_eq!(Some(word3.clone()), enc.get_by_name("word3"));
+	assert_eq!(None, enc.get_by_name("none"));
+	assert!(Some(word1.clone()) != enc.get_by_name("word3"));
 
-	enc.remove_word_by_name("word2");
+	enc.remove_by_name("word2");
 
-	assert_eq!(enc.get_word_count(), 2);
-	assert_eq!(Some(word1), enc.get_word_by_name("word1"));
-	assert_eq!(None, enc.get_word_by_name("word2"));
-	assert_eq!(Some(word3), enc.get_word_by_name("word3"));
-
+	assert_eq!(enc.get_count(), 2);
+	assert_eq!(Some(word1), enc.get_by_name("word1"));
+	assert_eq!(None, enc.get_by_name("word2"));
+	assert_eq!(Some(word3), enc.get_by_name("word3"));
 }

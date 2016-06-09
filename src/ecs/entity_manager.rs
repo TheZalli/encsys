@@ -4,6 +4,7 @@ use std::hash::Hash;
 use std::fmt::Debug;
 use std::rc::Rc;
 
+use EncSysContainer;
 use ecs::*;
 
 /// An entity manager creates and manages entities.
@@ -29,10 +30,13 @@ impl<C, D> EntMan<C, D>
 	pub fn new() -> EntMan<C, D> {
 		EntMan { comps: HashMap::new(), assoc_word_ids: Vec::new(), next_id: 0, count: 0}
 	}
+}
 
-	/// Adds the given entity to the entity manager.
-	/// Returns the id given to the entity.
-	pub fn add_ent(&mut self, e: Entity<C, D>) -> usize {
+impl<C, D> EncSysContainer<Entity<C, D>> for EntMan<C, D>
+	where	C: Clone + PartialEq + Eq + Hash + Debug,
+			D: Clone + PartialEq + Eq + Debug,
+{
+	fn add(&mut self, e: Entity<C, D>) -> usize {
 		let current_id = self.next_id;
 		self.next_id += 1;
 		self.count += 1;
@@ -49,8 +53,7 @@ impl<C, D> EntMan<C, D>
 		return current_id;
 	}
 
-	/// Returns the entity associated with the given entity id.
-	pub fn get_ent_by_id(&self, id: usize) -> Option<Entity<C, D>> {
+	fn get_by_id(&self, id: usize) -> Option<Entity<C, D>> {
 		// check if the id is out of bounds
 		if id >= self.next_id {
 			return None;
@@ -80,8 +83,7 @@ impl<C, D> EntMan<C, D>
 		Some(ent)
 	}
 
-	/// Removes the word with the highest id and frees it's id-slot.
-	pub fn remove_last_id(&mut self) {
+	fn remove_last_id(&mut self) {
 		self.assoc_word_ids.pop();
 		for (_, vec) in self.comps.iter_mut() {
 			vec.pop();
@@ -90,9 +92,8 @@ impl<C, D> EntMan<C, D>
 		self.count -= 1;
 	}
 
-	/// Removes the entity with the given id.
 	/// Leaves the given id slot unused, unless the last entity is removed.
-	pub fn remove_ent_by_id(&mut self, id: usize) {
+	fn remove_by_id(&mut self, id: usize) {
 		if id >= self.next_id {
 			// we're out of range
 			return;
@@ -112,13 +113,15 @@ impl<C, D> EntMan<C, D>
 		self.count -= 1;
 	}
 
-	/// Returns the amount of entities stored.
-	pub fn get_ent_count(&self) -> usize {
+	fn get_end_id(&self) -> usize {
+		self.next_id
+	}
+
+	fn get_count(&self) -> usize {
 		self.count
 	}
 
-	/// Returns true if there are no entities stored.
-	pub fn is_empty(&self) -> bool {
+	fn is_empty(&self) -> bool {
 		self.count == 0
 	}
 }

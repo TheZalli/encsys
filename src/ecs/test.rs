@@ -1,3 +1,4 @@
+use EncSysContainer;
 use ecs::*;
 
 #[test]
@@ -7,11 +8,11 @@ fn add_then_remove_ent() {
 
 	let ent = Entity::new(123);
 
-	let id = entman.add_ent(ent.clone());
+	let id = entman.add(ent.clone());
 
-	assert_eq!(entman.get_ent_count(), 1);
-	assert_eq!(entman.get_ent_by_id(id), Some(ent));
+	assert_eq!(entman.get_count(), 1);
+	assert_eq!(entman.get_by_id(id), Some(ent));
 
-	entman.remove_ent_by_id(id);
+	entman.remove_by_id(id);
 	assert!(entman.is_empty());
 }
