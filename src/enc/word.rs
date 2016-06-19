@@ -1,105 +1,97 @@
-use std::collections::HashMap;
-use std::collections::hash_map::Entry;
+use std::collections::{HashSet, hash_set};
 use std::hash::Hash;
 use std::fmt::Debug;
-use std::iter::IntoIterator;
+use std::iter::Iterator;
 use std::rc::Rc;
 
 use EncSysType;
-use enc::tag::*;
 
 /// A word that has a name and associated tags.
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Word<W, N, I>
-	where	N: EncSysType + Debug + Hash,
-			I: EncSysType + Debug,
+pub struct Word<N, T>
+	where	N: EncSysType + Debug,
+			T: EncSysType + Debug + Hash,
 {
-	name: Rc<W>,
-	tags: HashMap<Rc<N>, Option<Rc<I>>>
+	name: Rc<N>,
+	tags: HashSet<Rc<T>>
 }
 
-impl<W, N, I> Word<W, N, I>
-	where	N: EncSysType + Debug + Hash,
-			I: EncSysType + Debug,
+impl<N, T> Word<N, T>
+	where	N: EncSysType + Debug,
+			T: EncSysType + Debug + Hash,
 {
-	/// Creates a new empty word.
-	pub fn new<T>(name: T) -> Word<W, N, I>
-		where T: Into<Rc<W>> + EncSysType + Debug
+	pub fn new<U>(name: U, tags: HashSet<Rc<T>>) -> Word<N, T>
+		where	U: Into<Rc<N>>,
 	{
-		Word{ name: name.into(), tags: HashMap::new() }
+		Word { name: name.into(), tags: tags }
 	}
 
-	/// Creates a new word from the given name and the given tag vector
-	pub fn from_tag_vec<T>(name: T, vec: Vec<Tag<N, I>>) -> Word<W, N, I>
-		where T: Into<Rc<W>> + EncSysType + Debug
+	/// Creates a new empty word.
+	pub fn new_empty<U>(name: U) -> Word<N, T>
+		where U: Into<Rc<N>>
+	{
+		Word { name: name.into(), tags: HashSet::new() }
+	}
+
+	pub fn from_collection<U, V, W>(name: U, coll: V) -> Word<N, T>
+		where	U: Into<Rc<N>>,
+				V: IntoIterator<Item = W>,
+				W: Into<Rc<T>>,
 	{
 		Word {
 			name: name.into(),
-			tags: vec.into_iter().map(|t: Tag<N, I>| (t.name, t.data)).collect(),
+			tags: coll.into_iter().map(&Into::into).collect(),
 		}
 	}
 
 	/// Returns the words name.
-	pub fn get_name(&self) -> Rc<W> {
+	pub fn get_name(&self) -> Rc<N> {
 		self.name.clone()
 	}
 
-	/// Transforms the word into a vector of it's tags.
-	pub fn to_tag_vec(self) -> Vec<Tag<N, I>> {
-		self.tags.into_iter().map(|(n, i)| Tag::reconstruct(n, i)).collect()
+	pub fn get_tags(&self) -> HashSet<Rc<T>> {
+		self.tags.clone()
 	}
 
-	/// Adds the given tag to the word, replacing any previous tag with the same name.
-	pub fn add_tag(&mut self, t: Tag<N, I>) {
-		self.tags.insert(t.name, t.data);
-	}
-
-	/// Adds the given tag to the word, WITHOUT replacing any previous tags.
-	/// Returns true if the tag was added and false otherwise.
-	pub fn add_new_tag(&mut self, t: Tag<N, I>) -> bool {
-		match self.tags.entry(t.get_name()) {
-			Entry::Occupied(_) => false,
-			Entry::Vacant(x) => {
-				x.insert(t.get_data());
-				true
-			}
-		}
-	}
-
-	// maybe change the type N for this and the three next functions into Into<Rc<N>>
-
-	/// Returns the `TagData` struct associated with the tag with the given name.
-	/// Returns `None` if no such tag was found.
-	pub fn get_tag_data(&self, name: &N) -> Option<Rc<I>> {
-		match self.tags.get(name) {
-			Some(&ref data) => data.clone(),
-			_ => None
-		}
-	}
-
-
-	/// Returns true if the word has the given nullary tag.
-	pub fn has_nullary(&self, name: N) -> bool {
-		self.tags.get(&name) == None
+	/// Adds the given tag to the word, replacing any previous tag with the same value.
+	pub fn add_tag<U>(&mut self, tag: U)
+		where U: Into<Rc<T>>
+	{
+		// note that the duplicates aren't removed here but lazily when needed.
+		// this is so that we don't have to sort
+		self.tags.insert(tag.into());
 	}
 
 	/// Returns true if the word has the given tag.
-	pub fn has_tag(&self, name: N) -> bool {
-		self.tags.contains_key(&name)
+	pub fn has_tag<U>(&self, tag: U) -> bool
+		where U: Into<Rc<T>>
+	{
+		self.tags.contains(&tag.into())
 	}
 
+	/// Returns the amount of tags stored.
+	pub fn tag_amount(&self) -> usize {
+		self.tags.len()
+	}
 
 	/// Returns true if the word has no tags.
 	pub fn is_empty(&self) -> bool {
 		self.tags.is_empty()
 	}
+
+	pub fn iter(&self) -> TagIter<T> {
+		TagIter{ set_iter: self.tags.iter() }
+	}
 }
 
-/*impl<'a, W, N, I> Extend<&'a Tag<N, I>> for Word<W, N, I>
-	where	N: EncSysType + Debug + Hash,
-			I: EncSysType + Debug,
-{
-	fn extend<T>(&mut self, iter: T) where T: IntoIterator<Item=&'a Tag<N, I>> {
-		self.tags.extend(iter.into_iter().map(|t: &Tag<N, I>| (t.name.clone(), t.data.clone()) ))
+/// An iterator wrapper class for the `hash_set`'s iterator.
+pub struct TagIter<'a, T: 'a> {
+	set_iter: hash_set::Iter<'a, Rc<T>>
+}
+
+impl<'a, T> Iterator for TagIter<'a, T> {
+	type Item = Rc<T>;
+	fn next(&mut self) -> Option<Self::Item> {
+		self.set_iter.next().cloned()
 	}
-}*/
+}

@@ -30,6 +30,10 @@ impl<C, D> EntMan<C, D>
 	pub fn new() -> EntMan<C, D> {
 		EntMan { comps: HashMap::new(), assoc_word_ids: Vec::new(), next_id: 0, count: 0}
 	}
+
+	pub fn iter<'a>(&'a self) -> EntIter<'a, C, D> {
+		EntIter { entman_ref: self, index: 0 }
+	}
 }
 
 impl<C, D> EncSysContainer<Entity<C, D>> for EntMan<C, D>
@@ -123,4 +127,41 @@ impl<C, D> EncSysContainer<Entity<C, D>> for EntMan<C, D>
 	fn is_empty(&self) -> bool {
 		self.count == 0
 	}
+}
+
+/// An iterator that goes through all of the entities in an entity manager.
+pub struct EntIter<'a, C, D>
+	where	C: 'a + EncSysType + Hash + Debug,
+			D: 'a + EncSysType + Debug,
+{
+	entman_ref: &'a EntMan<C, D>,
+	index: usize,
+}
+
+impl<'a, C, D> Iterator for EntIter<'a, C, D>
+	where	C: 'a + EncSysType + Hash + Debug,
+			D: 'a + EncSysType + Debug,
+{
+	type Item = Entity<C, D>;
+
+	fn next(&mut self) -> Option<Self::Item> {
+		// reached the end
+		if self.index >= self.entman_ref.get_end_id() {
+			return None;
+		}
+
+		match self.entman_ref.get_by_id(self.index) {
+			// found a word, advance self and return it
+			Some(ent) => {
+				self.index += 1;
+				Some(ent)
+			},
+			// if we encountered a vacant id slot we have to ignore it and continue
+			None => {
+				self.index += 1;
+				self.next()
+			}
+		}
+	}
+
 }

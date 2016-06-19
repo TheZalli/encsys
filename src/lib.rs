@@ -42,24 +42,22 @@ impl<T: Clone + PartialEq + Eq> EncSysType for T {
 }
 
 
-pub struct EncSysMan<WordName, TagName, TagInfo, CompName, CompData>
+pub struct EncSysMan<WordName, Tag, CompName, CompData>
 	where	WordName: EncSysType + Hash + Debug,
-			TagName: EncSysType + Hash + Debug,
-			TagInfo: EncSysType + Debug,
+			Tag: EncSysType + Hash + Debug,
 
 			CompName: EncSysType + Hash + Debug,
 			CompData: EncSysType + Debug,
 			// now we're generic af
 {
-	enc: Encyclopedia<WordName, TagName, TagInfo>,
+	enc: Encyclopedia<WordName, Tag>,
 	ent_man: EntMan<CompName, CompData>,
 }
 
-impl<WordName, TagName, TagInfo, CompName, CompData>
-	EncSysMan<WordName, TagName, TagInfo, CompName, CompData>
+impl<WordName, Tag, CompName, CompData>
+	EncSysMan<WordName, Tag, CompName, CompData>
 		where	WordName: EncSysType + Hash + Debug,
-				TagName: EncSysType + Hash + Debug,
-				TagInfo: EncSysType + Debug,
+				Tag: EncSysType + Hash + Debug,
 
 				CompName: EncSysType + Hash + Debug,
 				CompData: EncSysType + Debug,
@@ -68,11 +66,11 @@ impl<WordName, TagName, TagInfo, CompName, CompData>
 		EncSysMan{ enc: Encyclopedia::new(), ent_man: EntMan::new() }
 	}
 
-	pub fn get_enc(&self) -> &Encyclopedia<WordName, TagName, TagInfo> {
+	pub fn get_enc(&self) -> &Encyclopedia<WordName, Tag> {
 		&self.enc
 	}
 
-	pub fn get_enc_mut(&mut self) -> &mut Encyclopedia<WordName, TagName, TagInfo> {
+	pub fn get_enc_mut(&mut self) -> &mut Encyclopedia<WordName, Tag> {
 		&mut self.enc
 	}
 

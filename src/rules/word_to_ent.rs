@@ -1,8 +1,8 @@
 #![allow(dead_code)]
-use std::collections::HashMap;
-use std::rc::Rc;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 //use enc::Word;
 //use enc::Tag;
@@ -10,13 +10,12 @@ use std::fmt::Debug;
 //use ecs::Comp;
 use EncSysType;
 
-pub struct W2ERule<TagName, TagInfo, CompName, CompData>
-	where	TagName: EncSysType + Hash + Debug,
-			TagInfo: EncSysType + Debug,
+pub struct W2ERule<Tag, CompName, CompData>
+	where	Tag: EncSysType + Hash + Debug,
 
 			CompName: EncSysType + Hash + Debug,
 			CompData: EncSysType + Debug,
 {
-	tags:	HashMap<Rc<TagName>, Option<TagInfo>>,
+	tags:	HashSet<Rc<Tag>>,
 	comps:	HashMap<Rc<CompName>, Rc<CompData>>,
 }
