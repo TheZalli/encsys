@@ -35,13 +35,20 @@ pub trait EncSysContainer<T> {
 	fn is_empty(&self) -> bool;
 }
 
-pub struct EncSysMan<WordName, TagName, TagInfo, CompName, CompData>
-	where	WordName: Clone + PartialEq + Eq + Hash + Debug,
-			TagName: Clone + PartialEq + Eq + Hash + Debug,
-			TagInfo: Clone + PartialEq + Eq + Debug,
+pub trait EncSysType: Clone + PartialEq + Eq {
+}
 
-			CompName: Clone + PartialEq + Eq + Hash + Debug,
-			CompData: Clone + PartialEq + Eq + Debug,
+impl<T: Clone + PartialEq + Eq> EncSysType for T {
+}
+
+
+pub struct EncSysMan<WordName, TagName, TagInfo, CompName, CompData>
+	where	WordName: EncSysType + Hash + Debug,
+			TagName: EncSysType + Hash + Debug,
+			TagInfo: EncSysType + Debug,
+
+			CompName: EncSysType + Hash + Debug,
+			CompData: EncSysType + Debug,
 			// now we're generic af
 {
 	enc: Encyclopedia<WordName, TagName, TagInfo>,
@@ -50,12 +57,12 @@ pub struct EncSysMan<WordName, TagName, TagInfo, CompName, CompData>
 
 impl<WordName, TagName, TagInfo, CompName, CompData>
 	EncSysMan<WordName, TagName, TagInfo, CompName, CompData>
-	where	WordName: Clone + PartialEq + Eq + Hash + Debug,
-			TagName:  Clone + PartialEq + Eq + Hash + Debug,
-			TagInfo:  Clone + PartialEq + Eq + Debug,
+		where	WordName: EncSysType + Hash + Debug,
+				TagName: EncSysType + Hash + Debug,
+				TagInfo: EncSysType + Debug,
 
-			CompName: Clone + PartialEq + Eq + Hash + Debug,
-			CompData: Clone + PartialEq + Eq + Debug,
+				CompName: EncSysType + Hash + Debug,
+				CompData: EncSysType + Debug,
 {
 	pub fn new() -> Self {
 		EncSysMan{ enc: Encyclopedia::new(), ent_man: EntMan::new() }

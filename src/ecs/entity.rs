@@ -4,12 +4,13 @@ use std::hash::Hash;
 use std::fmt::Debug;
 use std::rc::Rc;
 
+use EncSysType;
 use ecs::component::Comp;
 
 #[derive(Clone, PartialEq, Debug)]
 /// An entity derived from a word containing components that describe it.
 pub struct Entity<C, D>
-	where	C: PartialEq + Eq + Clone + Debug + Hash,
+	where	C: EncSysType + Debug + Hash,
 			D: Clone + Debug,
 {
 	assoc_word_id: usize,
@@ -17,7 +18,7 @@ pub struct Entity<C, D>
 }
 
 impl<C, D> Entity<C, D>
-	where	C: PartialEq + Eq + Clone + Debug + Hash,
+	where	C: EncSysType + Debug + Hash,
 			D: Clone + Debug,
 {
 	/// Creates a new entity that is associated with a word with the given id.
@@ -63,7 +64,7 @@ impl<C, D> Entity<C, D>
 
 /// An iterator that goes through all of the components in an entity.
 pub struct EntCompIter<'a, C, D>
-	where	C: 'a + PartialEq + Eq + Clone + Debug + Hash,
+	where	C: 'a + EncSysType + Debug + Hash,
 			D: 'a + Clone + Debug,
 {
 	comp_iter: hash_map::Iter<'a, Rc<C>, Rc<D>>,
@@ -71,7 +72,7 @@ pub struct EntCompIter<'a, C, D>
 
 
 impl<'a, C, D> Iterator for EntCompIter<'a, C, D>
-	where	C: PartialEq + Eq + Clone + Debug + Hash,
+	where	C: EncSysType + Debug + Hash,
 			D: Clone + Debug,
 {
 	type Item = Comp<C, D>;

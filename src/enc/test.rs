@@ -57,6 +57,7 @@ fn iterate_over_3() {
 
 	let mut i = enc.iter();
 
+	// the order of these assertions is the order of the id's.
 	assert_eq!(Some(word1), i.next());
 	assert_eq!(Some(word2), i.next());
 	assert_eq!(Some(word3), i.next());
@@ -107,7 +108,7 @@ fn test_tag_group() {
 	for w in enc.iter() {
 		for i in tags.iter() {
 			if w.has_tag(i.get_name().as_ref()) {
-				assert_eq!(w.get_tag_info(i.get_name().as_ref()), i.get_data());
+				assert_eq!(w.get_tag_data(i.get_name().as_ref()), i.get_data());
 				found += 1;
 			}
 		}

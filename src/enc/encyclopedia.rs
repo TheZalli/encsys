@@ -5,24 +5,24 @@ use std::fmt::Debug;
 use std::iter::Iterator;
 use std::rc::Rc;
 
-use EncSysContainer;
+use {EncSysContainer, EncSysType};
 use enc::tag::*;
 use enc::word::*;
 
 /// The word manager stores information about the tags associated with words.
 #[derive(Debug)]
 pub struct Encyclopedia<W, N, I>
-	where	W: Clone + PartialEq + Eq + Hash + Debug,
-			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Debug,
+	where	W: EncSysType + Hash + Debug,
+			N: EncSysType + Hash + Debug,
+			I: EncSysType + Debug,
 {
 	// an association from word names into their ids/indexes
 	word_map: HashMap<Rc<W>, usize>,
 	// an association from id's into their word names
 	word_vec: Vec<Option<Rc<W>>>,
 	// a hash map from tags to the vectors containing all of the existing tags
-	// to improve memory consumption, optimize the vector values
-	tags: HashMap<Rc<N>, Vec<TagData<I>>>,
+	// to improve memory consumption, optimize the order of the values to minimize length.
+	tags: HashMap<Rc<N>, Vec<Option<Option<Rc<I>>> >>,
 	// a group of tags using a single tag's name, used to avoid copying common tag combinations
 	tag_groups: HashMap<N, Vec<Tag<N, I>>>,
 	// the id of the next word that is added
@@ -33,9 +33,9 @@ pub struct Encyclopedia<W, N, I>
 }
 
 impl<W, N, I> Encyclopedia<W, N, I>
-	where	W: Clone + PartialEq + Eq + Hash + Debug,
-			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Debug,
+	where	W: EncSysType + Hash + Debug,
+			N: EncSysType + Hash + Debug,
+			I: EncSysType + Debug,
 {
 	/// Creates a new empty encyclopedia.
 	pub fn new() -> Encyclopedia<W, N, I> {
@@ -58,8 +58,8 @@ impl<W, N, I> Encyclopedia<W, N, I>
 	pub fn get_by_name<T>(&self, name: T) -> Option<Word<W, N, I>>
 		where T: Into<Rc<W>>,
 	{
-		// OPTIMIZATION: use the information that the name exists and what it is
 		match self.word_map.get(&name.into()) {
+			// OPTIMIZATION: use the information that the name exists and what it is
 			Some(&id) => self.get_by_id(id),
 			None => None,
 		}
@@ -82,9 +82,9 @@ impl<W, N, I> Encyclopedia<W, N, I>
 
 
 impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
-	where	W: Clone + PartialEq + Eq + Hash + Debug,
-			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Debug,
+	where	W: EncSysType + Hash + Debug,
+			N: EncSysType + Hash + Debug,
+			I: EncSysType + Debug,
 {
 	/// If a given word already exists, it is replaced.
 	fn add(&mut self, word: Word<W, N, I>) -> usize {
@@ -99,6 +99,8 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 			Entry::Vacant(x) => {
 				current_id = self.next_id;
 
+				assert_eq!(current_id, self.word_vec.len());
+
 				// add the name into both data structures
 				x.insert(current_id);
 				self.word_vec.push(Some(name));
@@ -112,9 +114,9 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 			// get the tag's vector, if not found create it
 			let vec = self.tags.entry(tag.get_name()).or_insert(Vec::new());
 			// resize the vector to fit
-			vec.resize(self.next_id, TagData::Empty);
+			vec.resize(self.next_id, None);
 			// add the tag's info
-			vec[current_id] = tag.data;
+			vec[current_id] = Some(tag.data);
 		}
 
 		return current_id;
@@ -127,12 +129,7 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 				// found the name
 				Some(&Some(ref name)) => name,
 				// didn't found the name
-				Some(&None) => return None,
-				// we were out of range
-				None => {
-					assert!(id >= self.next_id);
-					return None;
-				}
+				_ => return None,
 			};
 
 		// the returned variable
@@ -144,17 +141,22 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 			// currently this fails silently
 			if let Some(ref tag_vec) = self.tag_groups.get(tag_map_elem.0) {
 				// the tag_map_elem.1, which is the information of the tag is ignored
-				word.extend(tag_vec.clone());
+				for tag in tag_vec.iter() {
+					// add the tag only if there is already none.
+					// this is done because 'normally' added tags are given higher priority over
+					// group tags so they overwrite them.
+					word.add_new_tag(tag.clone());
+				}
 			}
 			else {
 				// check if we found data for the tag associated wit this word
 				match tag_map_elem.1.get(id) {
-					// nope didn't find
-					Some(&TagData::Empty) | None => {},
 					// yep we found it
-					Some(ref tag_data) => word.add_tag(
-						Tag::reconstruct(tag_map_elem.0.clone(), tag_data)
-					)
+					Some(&Some(ref tag_data)) => word.add_tag(
+						Tag::reconstruct(tag_map_elem.0.clone(), (*tag_data).clone())
+					),
+					// nope didn't find
+					_ => {},
 				}
 			}
 
@@ -193,7 +195,7 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 		// go through tags
 		for tag_map_elem in self.tags.iter_mut() {
 			// clear the word's tag
-			tag_map_elem.1.get_mut(id).map(|x| *x = TagData::Empty);
+			tag_map_elem.1.get_mut(id).map(|x| *x = None);
 		}
 		self.word_count -= 1;
 	}
@@ -243,9 +245,9 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 }
 
 /*impl<'a, N, I,W> IntoIterator for &'a Encyclopedia<W, N, I>
-	where	W: Clone + PartialEq + Eq + Hash + Debug,
-			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Debug,
+	where	W: EncSysType + Hash + Debug,
+			N: EncSysType + Hash + Debug,
+			I: EncSysType + Debug,
 {
 	type Item = <WordIter<'a, W, N, I> as Iterator>::Item;
 	type IntoIter = WordIter<'a, W, N, I>;
@@ -257,18 +259,18 @@ impl<W, N, I> EncSysContainer<Word<W, N, I>> for Encyclopedia<W, N, I>
 
 /// An iterator that goes through all of the words in an encyclopedia.
 pub struct WordIter<'a, W, N, I>
-	where	W: 'a + Clone + PartialEq + Eq + Hash + Debug,
-			N: 'a + Clone + PartialEq + Eq + Hash + Debug,
-			I: 'a + Clone + PartialEq + Eq + Debug,
+	where	W: 'a + EncSysType + Hash + Debug,
+			N: 'a + EncSysType + Hash + Debug,
+			I: 'a + EncSysType + Debug,
 {
 	enc_ref: &'a Encyclopedia<W, N, I>,
 	index: usize,
 }
 
 impl<'a, W, N, I> Iterator for WordIter<'a, W, N, I>
-	where	W: Clone + PartialEq + Eq + Hash + Debug,
-			N: Clone + PartialEq + Eq + Hash + Debug,
-			I: Clone + PartialEq + Eq + Debug,
+	where	W: EncSysType + Hash + Debug,
+			N: EncSysType + Hash + Debug,
+			I: EncSysType + Debug,
 {
 	type Item = Word<W, N, I>;
 

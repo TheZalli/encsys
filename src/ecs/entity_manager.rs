@@ -4,14 +4,14 @@ use std::hash::Hash;
 use std::fmt::Debug;
 use std::rc::Rc;
 
-use EncSysContainer;
+use {EncSysContainer, EncSysType};
 use ecs::*;
 
 /// An entity manager creates and manages entities.
 #[derive(Debug)]
 pub struct EntMan<C, D>
-	where	C: Clone + PartialEq + Eq + Hash + Debug,
-			D: Clone + PartialEq + Eq + Debug,
+	where	C: EncSysType + Hash + Debug,
+			D: EncSysType + Debug,
 {
 	// the components
 	comps: HashMap<Rc<C>, Vec<Option<Rc<D>>>>,
@@ -23,8 +23,8 @@ pub struct EntMan<C, D>
 }
 
 impl<C, D> EntMan<C, D>
-	where	C: Clone + PartialEq + Eq + Hash + Debug,
-			D: Clone + PartialEq + Eq + Debug,
+	where	C: EncSysType + Hash + Debug,
+			D: EncSysType + Debug,
 {
 	/// Creates an empty entity manager.
 	pub fn new() -> EntMan<C, D> {
@@ -33,8 +33,8 @@ impl<C, D> EntMan<C, D>
 }
 
 impl<C, D> EncSysContainer<Entity<C, D>> for EntMan<C, D>
-	where	C: Clone + PartialEq + Eq + Hash + Debug,
-			D: Clone + PartialEq + Eq + Debug,
+	where	C: EncSysType + Hash + Debug,
+			D: EncSysType + Debug,
 {
 	fn add(&mut self, e: Entity<C, D>) -> usize {
 		let current_id = self.next_id;
@@ -103,7 +103,6 @@ impl<C, D> EncSysContainer<Entity<C, D>> for EntMan<C, D>
 			return self.remove_last_id();
 		}
 
-		assert_eq!(self.assoc_word_ids.len(), self.next_id - 1);
 		self.assoc_word_ids[id] == None;
 
 		for (_, vec) in self.comps.iter_mut() {
