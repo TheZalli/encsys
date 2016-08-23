@@ -1,24 +1,23 @@
 use std::collections::{HashSet, hash_set};
-use std::hash::Hash;
-use std::fmt::Debug;
 use std::iter::Iterator;
 use std::rc::Rc;
+use std::fmt::Debug;
 
 use EncSysType;
 
 /// A word that has a name and associated tags.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Word<N, T>
-	where	N: EncSysType + Debug,
-			T: EncSysType + Debug + Hash,
+	where	N: Clone + PartialEq + Eq + Debug,
+			T: EncSysType + Debug,
 {
 	name: Rc<N>,
-	tags: HashSet<Rc<T>>
+	tags: HashSet<Rc<T>>,
 }
 
 impl<N, T> Word<N, T>
-	where	N: EncSysType + Debug,
-			T: EncSysType + Debug + Hash,
+	where	N: Clone + PartialEq + Eq + Debug,
+			T: EncSysType + Debug,
 {
 	pub fn new<U>(name: U, tags: HashSet<Rc<T>>) -> Word<N, T>
 		where	U: Into<Rc<N>>,
@@ -79,6 +78,7 @@ impl<N, T> Word<N, T>
 		self.tags.is_empty()
 	}
 
+	/// Returns an iterator over the tags of the word.
 	pub fn iter(&self) -> TagIter<T> {
 		TagIter{ set_iter: self.tags.iter() }
 	}
@@ -86,7 +86,7 @@ impl<N, T> Word<N, T>
 
 /// An iterator wrapper class for the `hash_set`'s iterator.
 pub struct TagIter<'a, T: 'a> {
-	set_iter: hash_set::Iter<'a, Rc<T>>
+	pub set_iter: hash_set::Iter<'a, Rc<T>>
 }
 
 impl<'a, T> Iterator for TagIter<'a, T> {

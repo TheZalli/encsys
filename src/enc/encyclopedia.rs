@@ -1,6 +1,4 @@
 use std::collections::{HashSet, HashMap, hash_map};
-use std::hash::Hash;
-use std::fmt::Debug;
 use std::iter::Iterator;
 use std::rc::Rc;
 
@@ -8,18 +6,17 @@ use EncSysType;
 use enc::word::*;
 
 /// The word manager stores information about the tags associated with words.
-#[derive(Debug)]
 pub struct Encyclopedia<N, T>
-	where	N: EncSysType + Hash + Debug,
-			T: EncSysType + Hash + Debug,
+	where	N: EncSysType,
+			T: EncSysType,
 {
 	// an association from word names into their tags
 	word_map: HashMap<Rc<N>, HashSet<Rc<T>> >,
 }
 
 impl<N, T> Encyclopedia<N, T>
-	where	N: EncSysType + Hash + Debug,
-			T: EncSysType + Hash + Debug,
+	where	N: EncSysType,
+			T: EncSysType,
 {
 	/// Creates a new empty encyclopedia.
 	pub fn new() -> Encyclopedia<N, T> {
@@ -69,15 +66,15 @@ impl<N, T> Encyclopedia<N, T>
 
 /// An iterator that goes through all of the words in an encyclopedia.
 pub struct WordIter<'a, N: 'a, T: 'a>
-	where	N: EncSysType + Hash + Debug,
-			T: EncSysType + Hash + Debug,
+	where	N: EncSysType,
+			T: EncSysType,
 {
 	map_iter: hash_map::Iter<'a, Rc<N>, HashSet<Rc<T>> >
 }
 
 impl<'a, N, T> Iterator for WordIter<'a, N, T>
-	where	N: EncSysType + Hash + Debug,
-			T: EncSysType + Hash + Debug,
+	where	N: EncSysType,
+			T: EncSysType,
 {
 	type Item = Word<N, T>;
 

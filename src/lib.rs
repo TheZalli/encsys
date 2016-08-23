@@ -1,84 +1,35 @@
+extern crate specs;
+
 pub mod enc;
-pub mod ecs;
-pub mod rules;
 
 use std::hash::Hash;
 use std::fmt::Debug;
 
 use enc::*;
-use ecs::*;
 
-/// A container for values with associated id's and objects (tags, components, etc).
-pub trait EncSysContainer<T> {
-	/// Adds the given value to self. Implemented function can overwrite an existing value.
-	/// Returns the id given to the value.
-	fn add(&mut self, t: T) -> usize;
+/// A marker type for any type that implements `Clone`, `PartialEq`, `Eq`, `Hash` and `Debug`.
+pub trait EncSysType: Clone + PartialEq + Eq + Hash + Debug {}
+impl<T: Clone + PartialEq + Eq + Hash + Debug> EncSysType for T {}
 
-	/// Returns the value associated with the given id.
-	fn get_by_id(&self, id: usize) -> Option<T>;
-
-	/// Removes the value with the highest id and frees it's id-slot.
-	fn remove_last_id(&mut self);
-
-	/// Removes a value with the given id.
-	/// Can leave the given id slot unused, unless the last entity is removed.
-	fn remove_by_id(&mut self, id: usize);
-
-	/// Returns the id after the last.
-	/// No id should be higher than this value.
-	fn get_end_id(&self) -> usize;
-
-	/// Returns the amount of values stored.
-	fn get_count(&self) -> usize;
-
-	/// Returns true if there are no values stored.
-	fn is_empty(&self) -> bool;
-}
-
-pub trait EncSysType: Clone + PartialEq + Eq {
-}
-
-impl<T: Clone + PartialEq + Eq> EncSysType for T {
-}
-
-
-pub struct EncSysMan<WordName, Tag, CompName, CompData>
-	where	WordName: EncSysType + Hash + Debug,
-			Tag: EncSysType + Hash + Debug,
-
-			CompName: EncSysType + Hash + Debug,
-			CompData: EncSysType + Debug,
-			// now we're generic af
+/// The master manager for the encyclopedia and entities.
+pub struct EncSysMan<WordName, Tag, CompName>
+	where	WordName: EncSysType,
+			Tag: EncSysType,
+			CompName: EncSysType,
 {
-	enc: Encyclopedia<WordName, Tag>,
-	ent_man: EntMan<CompName, CompData>,
+	/// The encyclopedia that contains words with their associated tags.
+	pub enc: Encyclopedia<WordName, Tag>,
+	/// The `specs::World` that contains all of the entities and components.
+	/// Notice that we are using the latest version from the git repo with the support for dynamic component types.
+	pub ecs_world: specs::World<CompName>,
 }
 
-impl<WordName, Tag, CompName, CompData>
-	EncSysMan<WordName, Tag, CompName, CompData>
-		where	WordName: EncSysType + Hash + Debug,
-				Tag: EncSysType + Hash + Debug,
-
-				CompName: EncSysType + Hash + Debug,
-				CompData: EncSysType + Debug,
+impl<WordName, Tag, CompName> EncSysMan<WordName, Tag, CompName>
+		where	WordName: EncSysType,
+				Tag: EncSysType,
+				CompName: EncSysType,
 {
 	pub fn new() -> Self {
-		EncSysMan{ enc: Encyclopedia::new(), ent_man: EntMan::new() }
-	}
-
-	pub fn get_enc(&self) -> &Encyclopedia<WordName, Tag> {
-		&self.enc
-	}
-
-	pub fn get_enc_mut(&mut self) -> &mut Encyclopedia<WordName, Tag> {
-		&mut self.enc
-	}
-
-	pub fn get_ent_man(&self) -> &EntMan<CompName, CompData> {
-		&self.ent_man
-	}
-
-	pub fn get_ent_man_mut(&mut self) -> &mut EntMan<CompName, CompData> {
-		&mut self.ent_man
+		EncSysMan{ enc: Encyclopedia::new(), ecs_world: specs::World::new_w_comp_id() }
 	}
 }
