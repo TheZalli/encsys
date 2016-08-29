@@ -1,6 +1,6 @@
 use std::collections::{HashSet, HashMap, hash_map};
 use std::iter::Iterator;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use EncSysType;
 use enc::word::*;
@@ -11,7 +11,7 @@ pub struct Encyclopedia<N, T>
 			T: EncSysType,
 {
 	// an association from word names into their tags
-	word_map: HashMap<Rc<N>, HashSet<Rc<T>> >,
+	word_map: HashMap<Arc<N>, HashSet<Arc<T>> >,
 }
 
 impl<N, T> Encyclopedia<N, T>
@@ -32,7 +32,7 @@ impl<N, T> Encyclopedia<N, T>
 
 	/// Returns a word with the given name or `None` if no such word was found.
 	pub fn get<U>(&self, name: U) -> Option<Word<N, T>>
-		where U: Into<Rc<N>>,
+		where U: Into<Arc<N>>,
 	{
 		let name = name.into().clone();
 		match self.word_map.get(&name) {
@@ -43,7 +43,7 @@ impl<N, T> Encyclopedia<N, T>
 
 	/// Removes the word with the given name.
 	pub fn remove<U>(&mut self, name: U)
-		where U: Into<Rc<N>>,
+		where U: Into<Arc<N>>,
 	{
 		self.word_map.remove(&name.into());
 	}
@@ -69,7 +69,7 @@ pub struct WordIter<'a, N: 'a, T: 'a>
 	where	N: EncSysType,
 			T: EncSysType,
 {
-	map_iter: hash_map::Iter<'a, Rc<N>, HashSet<Rc<T>> >
+	map_iter: hash_map::Iter<'a, Arc<N>, HashSet<Arc<T>> >
 }
 
 impl<'a, N, T> Iterator for WordIter<'a, N, T>
