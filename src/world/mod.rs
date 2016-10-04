@@ -1,16 +1,14 @@
-///! Contains the Encyclopedia and the EncSysWorld struct.
-extern crate specs;
+//! Contains `EncSysWorld` struct and the helper struct for building entities, `EncEntityBuilder`.
 
-pub mod enc;
+extern crate specs;
 
 #[cfg(test)]
 mod test;
 
 use std::any::Any;
-//use std::fmt::Debug;
 use std::ptr;
 
-use self::enc::*;
+use enc::*;
 use util::*;
 
 /// The master manager for the encyclopedia and entities.

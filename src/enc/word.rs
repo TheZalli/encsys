@@ -85,7 +85,8 @@ impl<N, T> Word<N, T>
 	}
 }
 
-/// An iterator wrapper class for the `hash_set`'s iterator.
+/// An iterator over the tags of a word.
+/// Implemented as a wrapper for the `hash_set`'s iterator.
 pub struct TagIter<'a, T: 'a> {
 	pub set_iter: hash_set::Iter<'a, Arc<T>>
 }

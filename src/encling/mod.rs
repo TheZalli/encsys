@@ -1,17 +1,16 @@
-///! Lexicographical features of the EncSys encyclopedia.
+//! Lexicographical features for `Encyclopedia`.
 
-//use encsys_util::EncSysType;
-use world::enc;
+use enc;
 
 //use std::collections::HashSet;
 use std::fmt;
 use std::error::Error;
 
-/// A marker trait for word names.
+/// A type used as the word name.
 pub type WordName = String;
+pub type Word = enc::Word<WordName, LingTag>;
 
-type Word = enc::Word<WordName, LingTag>;
-
+/// An error created by an operation of an EncLing `Encyclopedia`.
 #[derive(Debug)]
 pub enum EncLingError {
 	FmtError(fmt::Error),
@@ -57,8 +56,9 @@ pub enum LingTag {
 	//CustomSet(HashSet<WordName>),
 }
 
+/// TODO
 trait LingEnc {
-	// TODO
+
 }
 
 impl LingEnc for enc::Encyclopedia<WordName, LingTag> {
