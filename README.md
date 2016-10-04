@@ -7,31 +7,27 @@ The words contain information tags about what kind of entity they represent that
 
 Feel free to fork the repository, ask questions or give suggestions!
 
-## Project layout
+## Module layout
 
-The project is currently split into several crates described below.
+The crate is currently split into several modules described below.
 
-### `encsys`
+### util
 
-The core crate.
-Contains imports from the other crates and is intended to be the interface to EncSys in normal use cases.
+Utility module for all of the other EncSys modules.
 
-### `encsys_util`
-
-Utility crate for all of the other EncSys crates.
-
-### `encsys_world`
+### world
 
 Contains the `Encyclopedia` and the `EncSysWorld` structs that are used to store and change the state of the world.
 
-### `encling`
+### encling
 
 Contains features that specialize `Encyclopedia` struct to give lexicographical meaning to the words and formatting them.
 
-One of the main goals of `encling` is to work with many different languages to make translation into other languages of projects using EncSys easier.
+One of the main goals of encling is to work with many different languages to make translation into other languages of projects using EncSys easier.
 
 ## Future
 
-The project is still heavily a work-in-progress and I have no idea when the first real 0.1.0 release will be; and as this project is mainly for my own needs it depends on my inspiration and motivation.
+The project is still heavily a work-in-progress.
+I have no idea when the first real 0.1.0 release on crates.io will be since this project is mainly for my own needs and it's development speed depends on my inspiration and motivation at the moment.
 
 [specs]: https://github.com/slide-rs/specs

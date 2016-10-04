@@ -1,5 +1,4 @@
 ///! Contains the Encyclopedia and the EncSysWorld struct.
-extern crate encsys_util;
 extern crate specs;
 
 pub mod enc;
@@ -11,8 +10,8 @@ use std::any::Any;
 //use std::fmt::Debug;
 use std::ptr;
 
-use enc::*;
-use encsys_util::*;
+use self::enc::*;
+use util::*;
 
 /// The master manager for the encyclopedia and entities.
 pub struct EncSysWorld<WordName, Tag, CompName>

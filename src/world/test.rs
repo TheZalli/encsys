@@ -1,7 +1,7 @@
 extern crate specs;
 
 use super::*;
-use enc::*;
+use super::enc::*;
 
 type ESMan = EncSysWorld<String, String, String>;
 

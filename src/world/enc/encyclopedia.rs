@@ -2,8 +2,8 @@ use std::collections::{HashSet, HashMap, hash_map};
 use std::iter::Iterator;
 use std::sync::Arc;
 
-use encsys_util::EncSysType;
-use enc::word::*;
+use util::EncSysType;
+use super::word::*;
 
 /// A word manager that stores information about the tags associated with words.
 pub struct Encyclopedia<N, T>

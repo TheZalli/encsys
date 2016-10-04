@@ -1,7 +1,4 @@
-///! This is the EncSys core crate.
-extern crate encsys_util;
-extern crate encsys_world;
-extern crate encling;
-
-pub use encsys_util::*;
-pub use encsys_world::*;
+///! This is the EncSys core module.
+pub mod util;
+pub mod world;
+pub mod encling;

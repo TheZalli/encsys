@@ -1,4 +1,4 @@
-use enc::*;
+use super::*;
 
 #[test]
 fn add_then_check_word() {

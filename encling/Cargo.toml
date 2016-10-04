@@ -1,8 +1,0 @@
-[package]
-name = "encling"
-version = "0.1.0"
-authors = ["mrZalli <misterzalli@gmail.com>"]
-
-[dependencies]
-encsys_util = { path = "../encsys_util" }
-encsys_world = { path = "../encsys_world" }

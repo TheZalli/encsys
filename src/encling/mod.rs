@@ -1,9 +1,7 @@
 ///! Lexicographical features of the EncSys encyclopedia.
-extern crate encsys_util;
-extern crate encsys_world;
 
 //use encsys_util::EncSysType;
-use encsys_world::enc;
+use world::enc;
 
 //use std::collections::HashSet;
 use std::fmt;
