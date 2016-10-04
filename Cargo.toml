@@ -4,4 +4,6 @@ version = "0.1.0"
 authors = ["mrZalli <misterzalli@gmail.com>"]
 
 [dependencies]
-specs = { git = "https://github.com/slide-rs/specs" }
+encsys_util = { path = "encsys_util" }
+encsys_world = { path = "encsys_world" }
+encling = { path = "encling" }

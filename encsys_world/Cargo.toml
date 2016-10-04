@@ -1,0 +1,12 @@
+[package]
+name = "encsys_world"
+version = "0.1.0"
+authors = ["mrZalli <misterzalli@gmail.com>"]
+
+[dependencies]
+encsys_util = { path = "../encsys_util" }
+
+# we are using a version from github since specs 0.7.0 doesn't contain the
+# dynamic component feature I added and that we need
+# feel free to update the revision if needed
+specs = { git = "https://github.com/slide-rs/specs", rev = "bd679b7" }

@@ -1,23 +1,21 @@
+///! Contains the Encyclopedia and the EncSysWorld struct.
+extern crate encsys_util;
 extern crate specs;
 
-//use std::sync::Arc;
+pub mod enc;
+
+#[cfg(test)]
+mod test;
+
 use std::any::Any;
 //use std::fmt::Debug;
 use std::ptr;
 
 use enc::*;
-use super::EncSysType;
-
-
-// A wrapper struct for the word name so that we can implement `specs::Component` for it.
-pub struct WordNameCompWrap<N>(N);
-
-impl<N: Any + Send + Sync> specs::Component for WordNameCompWrap<N> {
-	type Storage = specs::VecStorage<Self>;
-}
+use encsys_util::*;
 
 /// The master manager for the encyclopedia and entities.
-pub struct EncSysMan<WordName, Tag, CompName>
+pub struct EncSysWorld<WordName, Tag, CompName>
 	where	WordName: EncSysType + Any,
 			Tag: EncSysType,
 			CompName: EncSysType,
@@ -31,14 +29,14 @@ pub struct EncSysMan<WordName, Tag, CompName>
 	pub ecs: specs::World<CompName>,
 }
 
-impl<WordName, Tag, CompName> EncSysMan<WordName, Tag, CompName>
+impl<WordName, Tag, CompName> EncSysWorld<WordName, Tag, CompName>
 	where	WordName: EncSysType + Any,
 			Tag: EncSysType,
 			CompName: EncSysType,
 {
-	/// Creates a new empty `EncSysMan`.
+	/// Creates a new empty `EncSysWorld`.
 	pub fn new() -> Self {
-		EncSysMan {
+		EncSysWorld {
 			enc: Encyclopedia::new(),
 			ecs: specs::World::new_w_comp_id()
 		}
@@ -47,9 +45,9 @@ impl<WordName, Tag, CompName> EncSysMan<WordName, Tag, CompName>
 	/// Creates and stores an entity based on a word by using the function `f` and returns the
 	/// created `specs::Entity` value.
 	///
-	/// This is the special feature that `EncSysMan` was built to do.
+	/// This is the special feature that `EncSysWorld` was built to do.
 	pub fn entity_from_word<F>(&mut self, word: Word<WordName, Tag>, f: &F) -> specs::Entity
-		where F: Fn(Word<WordName, Tag>, &mut MyEntityBuilder<CompName>)
+		where F: Fn(Word<WordName, Tag>, &mut EncEntityBuilder<CompName>)
 	{
 		// here is the builder that will construct the entity
 		let mut builder = self.builder();
@@ -59,20 +57,20 @@ impl<WordName, Tag, CompName> EncSysMan<WordName, Tag, CompName>
 		builder.finish()
 	}
 
-	fn builder(&mut self) -> MyEntityBuilder<CompName>
+	fn builder(&mut self) -> EncEntityBuilder<CompName>
 	{
-		MyEntityBuilder {
+		EncEntityBuilder {
 			builder: self.ecs.create_now(),
 		}
 	}
 }
 
-/// Works similarly to the struct `specs::EntityBuilder`.
-pub struct MyEntityBuilder<'a, CompName: 'a + EncSysType> {
+/// Constructs Entities by adding components one by one.
+pub struct EncEntityBuilder<'a, CompName: 'a + EncSysType> {
 	builder: specs::EntityBuilder<'a, CompName>,
 }
 
-impl<'a, CompName> MyEntityBuilder<'a, CompName>
+impl<'a, CompName> EncEntityBuilder<'a, CompName>
 	where	CompName: EncSysType
 {
 	/// Adds a component with the name CompName, type T and data value to the entity.
@@ -86,6 +84,7 @@ impl<'a, CompName> MyEntityBuilder<'a, CompName>
 			ptr::read(&self.builder as *const specs::EntityBuilder<CompName> )
 		};
 
+		// assign the cloned builder back after changing it
 		self.builder = cloned_builder.with_w_comp_id(comp_name, value);
 	}
 

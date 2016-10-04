@@ -1,12 +1,7 @@
-mod enc;
-mod encsysman;
-#[cfg(test)]
-mod test;
+///! This is the EncSys core crate.
+extern crate encsys_util;
+extern crate encsys_world;
+extern crate encling;
 
-use std::hash::Hash;
-
-pub use encsysman::*;
-
-/// A marker type for any type that implements `Clone`, `PartialEq`, `Eq`, `Hash` and `Debug`.
-pub trait EncSysType: Clone + PartialEq + Eq + Send + Sync + Hash {}
-impl<T: Clone + PartialEq + Eq + Send + Sync + Hash> EncSysType for T {}
+pub use encsys_util::*;
+pub use encsys_world::*;

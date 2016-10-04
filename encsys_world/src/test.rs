@@ -1,11 +1,13 @@
 extern crate specs;
 
-use encsysman::*;
+use super::*;
 use enc::*;
 
-type ESMan = EncSysMan<String, String, String>;
+type ESMan = EncSysWorld<String, String, String>;
 
+#[derive(Debug, PartialEq, Eq)]
 struct IntComp(i32);
+
 impl specs::Component for IntComp {
 	type Storage = specs::VecStorage<Self>;
 }
@@ -19,12 +21,13 @@ fn ent_from_word() {
 	man.ecs.register_w_comp_id::<IntComp>("comp".to_owned());
 
 	// the word to entity rule function
-	let foo = |word: Word<String, String>, builder: &mut MyEntityBuilder<String>| {
+	let foo = |word: Word<String, String>, builder: &mut EncEntityBuilder<String>| {
 		if word.has_tag("tag1".to_owned()) {
 			builder.add_comp::<IntComp>("comp".to_owned(), IntComp(1));
 		}
 	};
 
 	let ent = man.entity_from_word(word, &foo);
-	// TODO
+
+	assert_eq!(man.ecs.read_w_comp_id::<IntComp>("comp".to_owned()).get(ent), Some(&IntComp(1)));
 }

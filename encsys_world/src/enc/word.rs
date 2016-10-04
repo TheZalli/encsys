@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::fmt;
 use std::fmt::Debug;
 
-use EncSysType;
+use encsys_util::*;
 
 /// A word that has a name and associated tags.
 #[derive(PartialEq, Eq, Clone)]
