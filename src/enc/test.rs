@@ -1,37 +1,44 @@
 use super::*;
+use super::ling::{EncWord, LingTag};
+
+type Enc = Encyclopedia<EncWord>;
 
 #[test]
 fn add_then_check_word() {
-	let mut enc = Encyclopedia::new();
+	let mut enc = Enc::new();
 
-	let word = Word::from_collection("word", vec!["tag"]);
+	let word : EncWord = Word::new_from_collection("word".to_owned(),
+						 vec![LingTag::Custom("tag".to_owned()) ]);
+
 	enc.add(word.clone());
 
-	assert_eq!(Some(word), enc.get("word"));
+	assert_eq!(Some(word), enc.get("word".to_owned()));
 }
 
 #[test]
 fn add2_remove_one() {
-	let mut enc = Encyclopedia::new();
+	let mut enc = Enc::new();
 
-	let word1 = Word::from_collection("word1", vec!["a"]);
-	let word2 = Word::from_collection("word2", vec!["b"]);
+	let word1 : EncWord = Word::new_from_collection("word1".to_owned(),
+						  vec![LingTag::Custom("a".to_owned()) ]);
+ 	let word2 : EncWord = Word::new_from_collection("word2".to_owned(),
+ 						  vec![LingTag::Custom("b".to_owned()) ]);
 
 	enc.add(word1);
 	enc.add(word2);
-	enc.remove("word2");
+	enc.remove("word2".to_string());
 
 	assert_eq!(enc.amount(), 1);
 }
 
 #[test]
 fn iterate_over_n() {
-	let mut enc = Encyclopedia::<usize, usize>::new();
+	let mut enc = Enc::new();
 
 	let words = 100;
 
 	for w in 0..words {
-		enc.add(Word::from_collection(w, vec![10]));
+		enc.add(Word::new_from_collection(w.to_string(), vec![LingTag::Custom(10.to_string()) ]));
 	}
 
 	assert_eq!(words, enc.amount());
@@ -43,10 +50,10 @@ fn iterate_over_n() {
 
 #[test]
 fn test_get() {
-	let mut enc = Encyclopedia::<&str, ()>::new();
-	let word1 = Word::new_empty("word1");
-	let word2 = Word::new_empty("word2");
-	let word3 = Word::new_empty("word3");
+	let mut enc = Enc::new();
+	let word1 : EncWord = Word::new("word1".to_string());
+	let word2 : EncWord = Word::new("word2".to_string());
+	let word3 : EncWord = Word::new("word3".to_string());
 
 	enc.add(word1.clone());
 	enc.add(word2.clone());
@@ -54,16 +61,16 @@ fn test_get() {
 
 	assert_eq!(enc.amount(), 3);
 
-	assert_eq!(Some(word1.clone()), enc.get("word1"));
-	assert_eq!(Some(word2.clone()), enc.get("word2"));
-	assert_eq!(Some(word3.clone()), enc.get("word3"));
-	assert_eq!(None, enc.get("none"));
-	assert!(Some(word1.clone()) != enc.get("word3"));
+	assert_eq!(Some(word1.clone()), enc.get("word1".to_string() ));
+	assert_eq!(Some(word2.clone()), enc.get("word2".to_string()));
+	assert_eq!(Some(word3.clone()), enc.get("word3".to_string()));
+	assert_eq!(None, enc.get("none".to_string()));
+	assert!(Some(word1.clone()) != enc.get("word3".to_string()));
 
-	enc.remove("word2");
+	enc.remove("word2".to_string());
 
 	assert_eq!(enc.amount(), 2);
-	assert_eq!(Some(word1), enc.get("word1"));
-	assert_eq!(None, enc.get("word2"));
-	assert_eq!(Some(word3), enc.get("word3"));
+	assert_eq!(Some(word1), enc.get("word1".to_string()));
+	assert_eq!(None, enc.get("word2".to_string()));
+	assert_eq!(Some(word3), enc.get("word3".to_string()));
 }

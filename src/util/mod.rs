@@ -1,5 +1,4 @@
 //! Contains shared utilities for EncSys.
-
 use std::hash::Hash;
 
 /// A marker type for any type that implements `Clone`, `PartialEq`, `Eq` and `Hash`.

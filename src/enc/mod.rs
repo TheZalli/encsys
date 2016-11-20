@@ -1,10 +1,13 @@
-//! Contains `Word` and `Encyclopedia` structs.
-
-mod word;
+//! Contains the encyclopedia features.
 mod encyclopedia;
-
-pub use self::word::*;
-pub use self::encyclopedia::*;
+pub mod word;
+pub mod ling;
 
 #[cfg(test)]
 mod test;
+
+pub use self::encyclopedia::*;
+pub use self::word::*;
+
+/// A type used as the word name.
+pub type WordName = String;

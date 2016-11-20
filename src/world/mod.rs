@@ -1,35 +1,31 @@
 //! Contains `EncSysWorld` struct and the helper struct for building entities, `EncEntityBuilder`.
-
 extern crate specs;
 
 #[cfg(test)]
 mod test;
 
-use std::any::Any;
 use std::ptr;
 
-use enc::*;
-use util::*;
+use util::EncSysType;
+use enc::Encyclopedia;
+use enc::word::Word;
 
 /// The master manager for the encyclopedia and entities.
-pub struct EncSysWorld<WordName, Tag, CompName>
-	where	WordName: EncSysType + Any,
-			Tag: EncSysType,
-			CompName: EncSysType,
+pub struct EncSysWorld<W: Word, C: EncSysType>
 {
 	/// The encyclopedia  that contains words with their associated tags.
-	pub enc: Encyclopedia<WordName, Tag>,
+	pub enc: Encyclopedia<W>,
+
 	/// The `specs::World` that contains all of the entities and components.
 	///
 	/// Notice that we are using the latest version from the git repo with the support for dynamic
 	/// component types.
-	pub ecs: specs::World<CompName>,
+	pub ecs: specs::World<C>,
 }
 
-impl<WordName, Tag, CompName> EncSysWorld<WordName, Tag, CompName>
-	where	WordName: EncSysType + Any,
-			Tag: EncSysType,
-			CompName: EncSysType,
+impl<W: Word, C: EncSysType> EncSysWorld<W, C>
+	where	W::Name: EncSysType,
+			W::Tag: EncSysType,
 {
 	/// Creates a new empty `EncSysWorld`.
 	pub fn new() -> Self {
@@ -39,12 +35,34 @@ impl<WordName, Tag, CompName> EncSysWorld<WordName, Tag, CompName>
 		}
 	}
 
+	fn builder(&mut self) -> EncEntityBuilder<C>
+	{
+		EncEntityBuilder {
+			builder: self.ecs.create_now(),
+		}
+	}
+}
+
+/// Can create an entity from a word.
+pub trait WordToEntity {
+	type WordType: Word;
+	type CompName;
+
 	/// Creates and stores an entity based on a word by using the function `f` and returns the
 	/// created `specs::Entity` value.
-	///
-	/// This is the special feature that `EncSysWorld` was built to do.
-	pub fn entity_from_word<F>(&mut self, word: Word<WordName, Tag>, f: &F) -> specs::Entity
-		where F: Fn(Word<WordName, Tag>, &mut EncEntityBuilder<CompName>)
+	fn entity_from_word<F>(&mut self, word: Self::WordType, f: &F) -> specs::Entity
+		where	F: Fn(Self::WordType, &mut EncEntityBuilder<Self::CompName>);
+}
+
+impl<W: Word, C: EncSysType> WordToEntity for EncSysWorld<W, C>
+	where	W::Name: EncSysType,
+			W::Tag: EncSysType,
+{
+	type WordType = W;
+	type CompName = C;
+
+	fn entity_from_word<F>(&mut self, word: W, f: &F) -> specs::Entity
+		where	F: Fn(W, &mut EncEntityBuilder<C>)
 	{
 		// here is the builder that will construct the entity
 		let mut builder = self.builder();
@@ -52,13 +70,6 @@ impl<WordName, Tag, CompName> EncSysWorld<WordName, Tag, CompName>
 		f(word, &mut builder);
 		// return the created entity
 		builder.finish()
-	}
-
-	fn builder(&mut self) -> EncEntityBuilder<CompName>
-	{
-		EncEntityBuilder {
-			builder: self.ecs.create_now(),
-		}
 	}
 }
 
@@ -76,7 +87,7 @@ impl<'a, CompName> EncEntityBuilder<'a, CompName>
 	/// registered beforehand or this will panic.
 	pub fn add_comp<T: specs::Component>(&mut self, comp_name: CompName, value: T) {
 		// let's create an exact copy of the builder unsafely because it doesn't implement clone
-		// this should be ok since specs::EntityBuilderBuilder has just a specs::Entity and &World
+		// this should be ok since specs::EntityBuilder has just a specs::Entity and &World
 		let cloned_builder = unsafe {
 			ptr::read(&self.builder as *const specs::EntityBuilder<CompName> )
 		};

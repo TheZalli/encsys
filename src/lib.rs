@@ -6,4 +6,3 @@
 pub mod util;
 pub mod enc;
 pub mod world;
-pub mod encling;
