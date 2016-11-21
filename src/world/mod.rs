@@ -8,7 +8,7 @@ use std::ptr;
 
 use util::EncSysType;
 use enc::Encyclopedia;
-use enc::word::Word;
+use enc::Word;
 
 /// The master manager for the encyclopedia and entities.
 pub struct EncSysWorld<W: Word, C: EncSysType>

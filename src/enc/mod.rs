@@ -1,6 +1,6 @@
 //! Contains the encyclopedia features.
 mod encyclopedia;
-pub mod word;
+mod word;
 pub mod ling;
 
 #[cfg(test)]

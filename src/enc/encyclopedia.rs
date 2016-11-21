@@ -7,8 +7,7 @@ use util::EncSysType;
 use super::word::*;
 
 /// A word manager that stores information about the tags associated with words.
-pub struct Encyclopedia<W: Word>
-{
+pub struct Encyclopedia<W: Word> {
 	// an association from word names into their tags
 	word_map: HashMap<Arc<W::Name>, HashSet<Arc<W::Tag>> >,
 }

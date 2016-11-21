@@ -18,8 +18,7 @@ impl Word for EncWord {
 	type Name = WordName;
 	type Tag = LingTag;
 
-	fn new<U: Into<Arc<WordName>> >(name: U) -> Self
-	{
+	fn new<U: Into<Arc<WordName>> >(name: U) -> Self {
 		EncWord { name: name.into(), tags: HashSet::new() }
 	}
 
