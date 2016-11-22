@@ -1,6 +1,6 @@
-//! Contains the lexicographical features.
-use super::WordName;
-use super::word::{Word, TagIter};
+//! Contains an implementation of the Word trait.
+use enc::WordName;
+use enc::word::{Word, TagIter};
 
 use std::sync::Arc;
 use std::collections::HashSet;
@@ -92,8 +92,10 @@ impl Error for EncLingError {
 	}
 }
 
-/// An `EncLing` word tag.
-/// As generic as possible and tries to take as little assumptions about the used language as possible.
+/// A word tag with encyclopedic and lexicographical information.
+///
+/// As generic as possible and tries to take as little assumptions about the used language as
+/// possible.
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub enum LingTag {
 	Type(WordName),
