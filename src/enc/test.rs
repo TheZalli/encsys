@@ -1,14 +1,12 @@
 use super::*;
-use super::ling::{EncWord, LingTag};
-
-type Enc = Encyclopedia<EncWord>;
+use super::ling::LingTag;
 
 #[test]
 fn add_then_check_word() {
-	let mut enc = Enc::new();
+	let mut enc = Encyclopedia::new();
 
-	let word : EncWord = Word::new_from_collection("word".to_owned(),
-						 vec![LingTag::Custom("tag".to_owned()) ]);
+	let word = Word::new_from_collection("word".to_owned(),
+			   vec![LingTag::Custom("tag".to_owned()) ]);
 
 	enc.add(word.clone());
 
@@ -17,12 +15,13 @@ fn add_then_check_word() {
 
 #[test]
 fn add2_remove_one() {
-	let mut enc = Enc::new();
+	let mut enc = Encyclopedia::new();
 
-	let word1 : EncWord = Word::new_from_collection("word1".to_owned(),
-						  vec![LingTag::Custom("a".to_owned()) ]);
- 	let word2 : EncWord = Word::new_from_collection("word2".to_owned(),
- 						  vec![LingTag::Custom("b".to_owned()) ]);
+	let word1 = Word::new_from_collection("word1".to_owned(),
+				vec![LingTag::Custom("a".to_owned()) ]);
+	
+ 	let word2 = Word::new_from_collection("word2".to_owned(),
+ 				vec![LingTag::Custom("b".to_owned()) ]);
 
 	enc.add(word1);
 	enc.add(word2);
@@ -33,7 +32,7 @@ fn add2_remove_one() {
 
 #[test]
 fn iterate_over_n() {
-	let mut enc = Enc::new();
+	let mut enc = Encyclopedia::new();
 
 	let words = 100;
 
@@ -50,10 +49,10 @@ fn iterate_over_n() {
 
 #[test]
 fn test_get() {
-	let mut enc = Enc::new();
-	let word1 : EncWord = Word::new("word1".to_string());
-	let word2 : EncWord = Word::new("word2".to_string());
-	let word3 : EncWord = Word::new("word3".to_string());
+	let mut enc = Encyclopedia::new();
+	let word1 = Word::new("word1".to_string());
+	let word2 = Word::new("word2".to_string());
+	let word3 = Word::new("word3".to_string());
 
 	enc.add(word1.clone());
 	enc.add(word2.clone());

@@ -2,9 +2,9 @@ extern crate specs;
 
 use super::*;
 use enc::*;
-use enc::ling::{EncWord, LingTag};
+use enc::ling::LingTag;
 
-type ESMan = EncSysWorld<EncWord, String>;
+type ESMan = EncSysWorld<String>;
 
 #[derive(Debug, PartialEq, Eq)]
 struct IntComp(i32);
@@ -17,15 +17,15 @@ impl specs::Component for IntComp {
 fn ent_from_word() {
 	let mut man: ESMan = ESMan::new();
 	// the word
-	let word = Word::new_from_collection("word1".to_owned(),
+	let word = Word::new_from_collection("word1",
 			   vec![LingTag::Custom("tag1".to_owned()) ]);
 
 	// register a component
 	man.ecs.register_w_comp_id::<IntComp>("comp".to_owned());
 
 	// the word to entity rule function
-	let foo = |word: EncWord, builder: &mut EncEntityBuilder<String>| {
-		if word.has_tag(LingTag::Custom("tag1".to_owned()) ) {
+	let foo = |word: Word, builder: &mut EncEntityBuilder<String>| {
+		if word.has_tag(&LingTag::Custom("tag1".to_owned()) ) {
 			builder.add_comp::<IntComp>("comp".to_owned(), IntComp(1));
 		}
 	};

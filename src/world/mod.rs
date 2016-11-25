@@ -11,10 +11,9 @@ use enc::Encyclopedia;
 use enc::Word;
 
 /// The master manager for the encyclopedia and entities.
-pub struct EncSysWorld<W: Word, C: EncSysType>
-{
-	/// The encyclopedia  that contains words with their associated tags.
-	pub enc: Encyclopedia<W>,
+pub struct EncSysWorld<C: EncSysType> {
+	/// The encyclopedia that contains words with their associated tags.
+	pub enc: Encyclopedia,
 
 	/// The `specs::World` that contains all of the entities and components.
 	///
@@ -23,10 +22,7 @@ pub struct EncSysWorld<W: Word, C: EncSysType>
 	pub ecs: specs::World<C>,
 }
 
-impl<W: Word, C: EncSysType> EncSysWorld<W, C>
-	where	W::Name: EncSysType,
-			W::Tag: EncSysType,
-{
+impl<C: EncSysType> EncSysWorld<C> {
 	/// Creates a new empty `EncSysWorld`.
 	pub fn new() -> Self {
 		EncSysWorld {
@@ -45,24 +41,19 @@ impl<W: Word, C: EncSysType> EncSysWorld<W, C>
 
 /// Can create an entity from a word.
 pub trait WordToEntity {
-	type WordType: Word;
 	type CompName;
 
 	/// Creates and stores an entity based on a word by using the function `f` and returns the
 	/// created `specs::Entity` value.
-	fn entity_from_word<F>(&mut self, word: Self::WordType, f: &F) -> specs::Entity
-		where	F: Fn(Self::WordType, &mut EncEntityBuilder<Self::CompName>);
+	fn entity_from_word<F>(&mut self, word: Word, f: &F) -> specs::Entity
+		where	F: Fn(Word, &mut EncEntityBuilder<Self::CompName>);
 }
 
-impl<W: Word, C: EncSysType> WordToEntity for EncSysWorld<W, C>
-	where	W::Name: EncSysType,
-			W::Tag: EncSysType,
-{
-	type WordType = W;
+impl<C: EncSysType> WordToEntity for EncSysWorld<C> {
 	type CompName = C;
 
-	fn entity_from_word<F>(&mut self, word: W, f: &F) -> specs::Entity
-		where	F: Fn(W, &mut EncEntityBuilder<C>)
+	fn entity_from_word<F>(&mut self, word: Word, f: &F) -> specs::Entity
+		where	F: Fn(Word, &mut EncEntityBuilder<C>)
 	{
 		// here is the builder that will construct the entity
 		let mut builder = self.builder();
@@ -78,9 +69,7 @@ pub struct EncEntityBuilder<'a, CompName: 'a + EncSysType> {
 	builder: specs::EntityBuilder<'a, CompName>,
 }
 
-impl<'a, CompName> EncEntityBuilder<'a, CompName>
-	where	CompName: EncSysType
-{
+impl<'a, CompName: EncSysType> EncEntityBuilder<'a, CompName> {
 	/// Adds a component with the name CompName, type T and data value to the entity.
 	///
 	/// The component identification pair, which means the comp_name and T in this case, have to be

@@ -1,54 +1,53 @@
 //! Contains the `Encyclopedia` struct and an iterator to it's words.
 use std::collections::{HashSet, HashMap, hash_map};
 use std::iter::Iterator;
-use std::sync::Arc;
+use std::borrow::Cow;
+use std::ops::Deref;
 
-use util::EncSysType;
 use super::word::*;
+use super::ling::LingTag;
 
 /// A word manager that stores information about the tags associated with words.
-pub struct Encyclopedia<W: Word> {
+pub struct Encyclopedia {
 	// an association from word names into their tags
-	word_map: HashMap<Arc<W::Name>, HashSet<Arc<W::Tag>> >,
+	word_map: HashMap<String, HashSet<LingTag>>,
 }
 
-impl<W: Word> Encyclopedia<W>
-	where	W::Name: EncSysType,
-			W::Tag: EncSysType,
+impl Encyclopedia
 {
 	/// Creates a new empty encyclopedia.
-	pub fn new() -> Encyclopedia<W> {
+	pub fn new() -> Encyclopedia {
 		Encyclopedia {
 			word_map: HashMap::new(),
 		}
 	}
 
 	/// Adds a new word to the encyclopedia's word map.
-	pub fn add(&mut self, w: W) {
-		self.word_map.insert(w.get_name(), w.get_tags());
+	pub fn add(&mut self, word: Word) {
+		self.word_map.insert(
+			word.get_name().into_owned(),
+			word.get_tags().into_iter().map(|x| x.clone().into_owned()).collect()
+		);
 	}
 
 	/// Returns a word with the given name or `None` if no such word was found.
-	pub fn get<U>(&self, name: U) -> Option<W>
-		where U: Into<Arc<W::Name>>,
+	pub fn get<'a, U>(&'a self, name: U) -> Option<Word<'a>>
+		where  U: 'a + AsRef<str> + Into<Cow<'a, str>>
 	{
-		let name = name.into().clone();
-		match self.word_map.get(&name) {
-			Some(&ref set) => Some(Word::new_from_collection(name, set.clone())),
+		match self.word_map.get(name.as_ref()) {
+			Some(&ref set) => Some(Word::new_from_collection(name.into(), set)),
 			None => None,
 		}
 	}
 
 	/// Removes the word with the given name.
-	pub fn remove<U>(&mut self, name: U)
-		where U: Into<Arc<W::Name>>,
-	{
-		self.word_map.remove(&name.into());
+	pub fn remove<'a, U: 'a + AsRef<str>>(&'a mut self, name: U) {
+		self.word_map.remove(name.as_ref());
 	}
 
 	/// Returns an iterator to the words
-	pub fn iter(&self) -> WordIter<W> {
-		WordIter{ map_iter: self.word_map.iter() }
+	pub fn iter<'a>(&'a self) -> WordIter<'a> {
+		WordIter{ iter: self.word_map.iter() }
 	}
 
 	/// Returns the amount of words stored.
@@ -63,19 +62,16 @@ impl<W: Word> Encyclopedia<W>
 }
 
 /// An iterator that goes through all of the words in an encyclopedia.
-pub struct WordIter<'a, W: 'a + Word>
-{
-	map_iter: hash_map::Iter<'a, Arc<W::Name>, HashSet<Arc<W::Tag>> >,
+pub struct WordIter<'a> {
+	iter: hash_map::Iter<'a, String, HashSet<LingTag> >,
 }
 
-impl<'a, W: Word> Iterator for WordIter<'a, W>
-	where W::Tag: EncSysType
-{
-	type Item = W;
+impl<'a> Iterator for WordIter<'a> {
+	type Item = Word<'a>;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		match self.map_iter.next() {
-			Some((name, tags)) => Some(W::new_from_collection(name.clone(), tags.clone())),
+		match self.iter.next() {
+			Some((name, tags)) => Some(Word::new_from_collection(name.deref(), tags)),
 			None => None,
 		}
 	}
