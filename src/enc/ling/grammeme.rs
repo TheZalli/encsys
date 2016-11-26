@@ -1,45 +1,46 @@
 //! Contains structs for storing information about lexicographical rules used in word formatting.
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::iter::FromIterator;
 
 /// A grammatical category, like case, person or verb tense.
 /// The values of a grammatical category are called "grammemes" but in this struct's method
 /// interface they are also called "values".
-pub struct GrammCategory<'a> {
-	category_name: &'a str,
-	default_value: Option<&'a str>,
-	grammeme_values: HashSet<&'a str>,
+#[derive(Hash, PartialEq, Eq)]
+pub struct GrammCategory {
+	// could be optimized away
+	default_value: Option<String>,
+	grammeme_values: BTreeSet<String>,
 }
 
-impl<'a> GrammCategory<'a> {
+impl GrammCategory {
 	/// Creates a new grammatical category.
 	/// The default value is optional. If given `None`, no default value is given.
-	pub fn new<U>(name: &'a str, default_value: Option<&'a str>, values: U) -> Self
-		where /*T: 'a + AsRef<str> + Clone,*/ U: IntoIterator<Item=&'a str>
+	pub fn new<'a, U, V>(default_value: U, values: V) -> Self
+		where /*T: 'a + AsRef<str> + Clone,*/
+				U: Into<Option<&'a str>> + Clone,
+				V: IntoIterator<Item=&'a str>,
 	{
-		let def_str_opt = default_value.map(|x| x.clone());
 		GrammCategory {
-			category_name: name.clone(),
-			default_value: def_str_opt,
+			default_value: default_value.clone().into().map(&ToOwned::to_owned),
 			grammeme_values: FromIterator::from_iter(
-				def_str_opt.into_iter().chain(values.into_iter().map(|x| x.clone()) )
+				default_value.into().into_iter().map(|x| x.to_owned())
+				.chain(values.into_iter().map(|x| x.to_owned()) )
 			),
 		}
 	}
 
-	/// Returns the name of this grammatical category.
-	pub fn get_name(&self) -> &str {
-		self.category_name
+	pub fn has_default_value(&self) -> bool {
+		self.default_value.is_some()
 	}
 
 	/// Returns the default grammeme for this grammatical category.
 	/// If there is no default value, `None` is returned.
-	pub fn get_default_value(&self) -> Option<&str> {
-		self.default_value
+	pub fn get_default_value(&self) -> &Option<String> {
+		&self.default_value
 	}
 
 	/// Returns all of the grammemes in this grammatical category.
-	pub fn get_values(&self) -> &HashSet<&str> {
+	pub fn get_values(&self) -> &BTreeSet<String> {
 		&self.grammeme_values
 	}
 
@@ -51,23 +52,8 @@ impl<'a> GrammCategory<'a> {
 	/// Returns the reference to the given grammeme in this category or `None` if the value is not
 	/// valid for this grammatical category.
 	pub fn get_value<T: AsRef<str>>(&self, value: T) -> Option<&str> {
-		self.grammeme_values.get(value.as_ref()).map(|x| *x)
+		self.grammeme_values.get(value.as_ref()).map(&AsRef::as_ref)
 	}
-
-	/// Constructs a grammeme having the given value if it is an allowed value of this grammatical
-	/// category.
-	pub fn get_grammeme<T: AsRef<str>>(&self, value: T) -> Option<Grammeme> {
-		if let Some(g) = self.get_value(value) {
-			Some(Grammeme{
-				category: self.category_name,
-				value: g.clone(),
-			})
-		}
-		else {
-			None
-		}
-	}
-
 }
 
 /// A valid grammeme that also contains the information about the category it is in.

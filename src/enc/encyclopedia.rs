@@ -4,12 +4,12 @@ use std::iter::Iterator;
 use std::borrow::Cow;
 use std::ops::Deref;
 
-use super::word::*;
-use super::ling::LingTag;
+use enc::word::*;
+use enc::ling::LingTag;
 
 /// A word manager that stores information about the tags associated with words.
 pub struct Encyclopedia {
-	// an association from word names into their tags
+	/// An association from word names into their tags.
 	word_map: HashMap<String, HashSet<LingTag>>,
 }
 
