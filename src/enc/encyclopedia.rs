@@ -6,11 +6,17 @@ use std::ops::Deref;
 
 use enc::word::*;
 use enc::ling::LingTag;
+use enc::ling::grammeme::GrammCategory;
 
 /// A word manager that stores information about the tags associated with words.
 pub struct Encyclopedia {
 	/// An association from word names into their tags.
 	word_map: HashMap<String, HashSet<LingTag>>,
+	/// All of the available grammatical categories.
+	/// Map from category names into their values.
+	/// The first value in the tuple is the default value if any.
+	// TODO: optimize the default value into a raw pointer.
+	gramm_cats: HashMap<String, (Option<String>, HashSet<String>)>,
 }
 
 impl Encyclopedia
@@ -19,20 +25,19 @@ impl Encyclopedia
 	pub fn new() -> Encyclopedia {
 		Encyclopedia {
 			word_map: HashMap::new(),
+			gramm_cats: HashMap::new(),
 		}
 	}
 
 	/// Adds a new word to the encyclopedia's word map.
-	pub fn add(&mut self, word: Word) {
-		self.word_map.insert(
-			word.get_name().into_owned(),
-			word.get_tags().into_iter().map(|x| x.clone().into_owned()).collect()
-		);
+	pub fn add_word(&mut self, word: Word) {
+		let entry = word.into_map_entry();
+		self.word_map.insert(entry.0, entry.1);
 	}
 
 	/// Returns a word with the given name or `None` if no such word was found.
-	pub fn get<'a, U>(&'a self, name: U) -> Option<Word<'a>>
-		where  U: 'a + AsRef<str> + Into<Cow<'a, str>>
+	pub fn get_word<'a, T>(&'a self, name: T) -> Option<Word<'a>>
+		where  T: 'a + AsRef<str> + Into<Cow<'a, str>>
 	{
 		match self.word_map.get(name.as_ref()) {
 			Some(&ref set) => Some(Word::new_from_collection(name.into(), set)),
@@ -41,23 +46,32 @@ impl Encyclopedia
 	}
 
 	/// Removes the word with the given name.
-	pub fn remove<'a, U: 'a + AsRef<str>>(&'a mut self, name: U) {
+	pub fn remove_word<'a, U: 'a + AsRef<str>>(&'a mut self, name: U) {
 		self.word_map.remove(name.as_ref());
 	}
 
 	/// Returns an iterator to the words
-	pub fn iter<'a>(&'a self) -> WordIter<'a> {
+	pub fn iter_words<'a>(&'a self) -> WordIter<'a> {
 		WordIter{ iter: self.word_map.iter() }
 	}
 
 	/// Returns the amount of words stored.
-	pub fn amount(&self) -> usize {
+	pub fn word_amount(&self) -> usize {
 		self.word_map.len()
 	}
 
-	/// Tells if the encyclopedia has no words.
+	pub fn add_gramm_cat(&mut self, categ: GrammCategory) {
+		let entry = categ.into_map_entry();
+		self.gramm_cats.insert(entry.0, entry.1);
+	}
+
+	pub fn get_gramm_cat<T: AsRef<str>>(&self, name: T) -> Option<GrammCategory> {
+		unimplemented!()
+	}
+
+	/// Tells if the encyclopedia has no words or grammatical categories.
 	pub fn is_empty(&self) -> bool {
-		self.word_map.is_empty()
+		self.word_map.is_empty() && self.gramm_cats.is_empty()
 	}
 }
 

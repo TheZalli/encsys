@@ -1,32 +1,37 @@
 //! Contains structs for storing information about lexicographical rules used in word formatting.
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 use std::iter::FromIterator;
+use std::borrow::Cow;
 
 /// A grammatical category, like case, person or verb tense.
 /// The values of a grammatical category are called "grammemes" but in this struct's method
 /// interface they are also called "values".
-#[derive(Hash, PartialEq, Eq)]
-pub struct GrammCategory {
-	// could be optimized away
-	default_value: Option<String>,
-	grammeme_values: BTreeSet<String>,
+pub struct GrammCategory<'a> {
+	name: Cow<'a, str>,
+	default_value: Option<Cow<'a, str>>,
+	values: HashSet<Cow<'a, str>>,
 }
 
-impl GrammCategory {
+impl<'a> GrammCategory<'a> {
 	/// Creates a new grammatical category.
 	/// The default value is optional. If given `None`, no default value is given.
-	pub fn new<'a, U, V>(default_value: U, values: V) -> Self
-		where /*T: 'a + AsRef<str> + Clone,*/
-				U: Into<Option<&'a str>> + Clone,
-				V: IntoIterator<Item=&'a str>,
+	pub fn new<T, U, V>(name: T, default_value: U, values: V) -> Self
+		where 	T: 'a + Into<Cow<'a, str>>,
+				U: Into<Option<T>> + Clone,
+				V: IntoIterator<Item=T>,
 	{
 		GrammCategory {
-			default_value: default_value.clone().into().map(&ToOwned::to_owned),
-			grammeme_values: FromIterator::from_iter(
-				default_value.into().into_iter().map(|x| x.to_owned())
-				.chain(values.into_iter().map(|x| x.to_owned()) )
+			name: name.into(),
+			default_value: default_value.clone().into().map(&Into::into),
+			values: FromIterator::from_iter(
+				default_value.into().into_iter().map(&Into::into)
+				.chain(values.into_iter().map(&Into::into))
 			),
 		}
+	}
+
+	pub fn get_name(&self) -> Cow<'a, str> {
+		self.name.clone()
 	}
 
 	pub fn has_default_value(&self) -> bool {
@@ -35,39 +40,51 @@ impl GrammCategory {
 
 	/// Returns the default grammeme for this grammatical category.
 	/// If there is no default value, `None` is returned.
-	pub fn get_default_value(&self) -> &Option<String> {
-		&self.default_value
+	pub fn get_default_value(&self) -> Option<Cow<'a, str>> {
+		self.default_value.clone()
 	}
 
 	/// Returns all of the grammemes in this grammatical category.
-	pub fn get_values(&self) -> &BTreeSet<String> {
-		&self.grammeme_values
+	pub fn get_values(&self) -> &HashSet<Cow<'a, str>> {
+		&self.values
 	}
 
 	/// Returns true if the given grammeme is a valid value for this grammatical category.
 	pub fn is_value_valid<T: AsRef<str>>(&self, value: T) -> bool {
-		self.grammeme_values.contains(value.as_ref())
+		self.values.contains(value.as_ref())
 	}
 
 	/// Returns the reference to the given grammeme in this category or `None` if the value is not
 	/// valid for this grammatical category.
-	pub fn get_value<T: AsRef<str>>(&self, value: T) -> Option<&str> {
-		self.grammeme_values.get(value.as_ref()).map(&AsRef::as_ref)
+	pub fn get_value<T: AsRef<str>>(&self, value: T) -> Option<Cow<'a, str>> {
+		self.values.get(value.as_ref()).map(|x| x.clone())
 	}
+
+	/// Consumes self and returns a tuple that can be used to store this into a map structure.
+	pub fn into_map_entry(self) -> (String, (Option<String>, HashSet<String>)) {
+		(
+			self.name.into_owned(),
+			(
+				self.default_value.map(&Cow::into_owned),
+				self.values.into_iter().map(&Cow::into_owned).collect()
+			)
+		)
+	}
+
 }
 
 /// A valid grammeme that also contains the information about the category it is in.
 ///
 /// Does not contain a reference to the actual `GrammCategory` struct, just to it's name.
 pub struct Grammeme<'a> {
-	category: &'a str,
+	cat_name: &'a str,
 	value: &'a str,
 }
 
 impl<'a> Grammeme<'a> {
 	/// Returns the name of the category.
 	pub fn get_category_name(&self) -> &str {
-		self.category
+		self.cat_name
 	}
 
 	/// Returns the value. This is the textual presentation of the grammeme.

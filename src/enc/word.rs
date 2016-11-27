@@ -65,6 +65,14 @@ impl<'a> Word<'a> {
 	pub fn iter(&'a self) -> TagIter<'a> {
 		TagIter{ iter: self.tags.iter() }
 	}
+
+	/// Consumes self and returns a tuple that can be used to store this into a map structure.
+	pub fn into_map_entry(self) -> (String, HashSet<LingTag>) {
+		(
+			self.name.into_owned(),
+			self.tags.into_iter().map(&Cow::into_owned).collect()
+		)
+	}
 }
 
 /// An iterator over the tags of a word.
