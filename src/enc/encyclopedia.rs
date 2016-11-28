@@ -19,8 +19,7 @@ pub struct Encyclopedia {
 	gramm_cats: HashMap<String, (Option<String>, HashSet<String>)>,
 }
 
-impl Encyclopedia
-{
+impl Encyclopedia {
 	/// Creates a new empty encyclopedia.
 	pub fn new() -> Encyclopedia {
 		Encyclopedia {
@@ -65,8 +64,13 @@ impl Encyclopedia
 		self.gramm_cats.insert(entry.0, entry.1);
 	}
 
-	pub fn get_gramm_cat<T: AsRef<str>>(&self, name: T) -> Option<GrammCategory> {
-		unimplemented!()
+	pub fn get_gramm_cat<'a>(&'a self, name: &'a str) -> Option<GrammCategory> {
+		let opt = self.gramm_cats.get(name);
+		if let Some(&(ref def_opt, ref set)) = opt {
+			Some(GrammCategory::new(name.clone(), def_opt.clone(), set.clone()))
+		} else {
+			None
+		}
 	}
 
 	/// Tells if the encyclopedia has no words or grammatical categories.

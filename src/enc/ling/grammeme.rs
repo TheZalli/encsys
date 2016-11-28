@@ -15,16 +15,17 @@ pub struct GrammCategory<'a> {
 impl<'a> GrammCategory<'a> {
 	/// Creates a new grammatical category.
 	/// The default value is optional. If given `None`, no default value is given.
-	pub fn new<T, U, V>(name: T, default_value: U, values: V) -> Self
-		where 	T: 'a + Into<Cow<'a, str>>,
-				U: Into<Option<T>> + Clone,
-				V: IntoIterator<Item=T>,
+	pub fn new<T1, T2, T3, U>(name: T1, default_value: Option<T2>, values: U) -> Self
+		where 	T1: 'a + Into<Cow<'a, str>>,
+				T2: 'a + Into<Cow<'a, str>> + Clone,
+				T3: 'a + Into<Cow<'a, str>>,
+				U: IntoIterator<Item=T3>,
 	{
 		GrammCategory {
 			name: name.into(),
-			default_value: default_value.clone().into().map(&Into::into),
+			default_value: default_value.clone().map(&Into::into),
 			values: FromIterator::from_iter(
-				default_value.into().into_iter().map(&Into::into)
+				default_value.into_iter().map(&Into::into)
 				.chain(values.into_iter().map(&Into::into))
 			),
 		}
