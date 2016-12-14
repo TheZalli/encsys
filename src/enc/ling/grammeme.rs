@@ -6,6 +6,7 @@ use std::borrow::Cow;
 /// A grammatical category, like case, person or verb tense.
 /// The values of a grammatical category are called "grammemes" but in this struct's method
 /// interface they are also called "values".
+#[derive(Clone)]
 pub struct GrammCategory<'a> {
 	name: Cow<'a, str>,
 	default_value: Option<Cow<'a, str>>,
@@ -78,18 +79,23 @@ impl<'a> GrammCategory<'a> {
 ///
 /// Does not contain a reference to the actual `GrammCategory` struct, just to it's name.
 pub struct Grammeme<'a> {
-	cat_name: &'a str,
-	value: &'a str,
+	cat_name: Cow<'a, str>,
+	value: Cow<'a, str>,
 }
 
 impl<'a> Grammeme<'a> {
+	/// Constructs a new grammeme. Does no validity checking.
+	pub fn new(category_name: Cow<'a, str>, value: Cow<'a, str>) -> Grammeme<'a> {
+		Grammeme { cat_name: category_name, value: value }
+	}
+
 	/// Returns the name of the category.
-	pub fn get_category_name(&self) -> &str {
-		self.cat_name
+	pub fn get_category_name(&self) -> Cow<'a, str> {
+		self.cat_name.clone()
 	}
 
 	/// Returns the value. This is the textual presentation of the grammeme.
-	pub fn get_value(&self) -> &str {
-		self.value
+	pub fn get_value(&self) -> Cow<'a, str> {
+		self.value.clone()
 	}
 }

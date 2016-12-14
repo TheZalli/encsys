@@ -2,7 +2,7 @@
 
 mod tag;
 pub mod grammeme;
-mod error;
+pub mod error;
 
 #[cfg(test)]
 mod test;
