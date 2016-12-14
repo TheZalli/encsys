@@ -10,4 +10,4 @@ pub use self::encyclopedia::*;
 pub use self::word::*;
 
 // / A type used as the word name.
-//pub type WordName = &str;
+// pub type WordName = &str;
